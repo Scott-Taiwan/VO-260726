@@ -1,0 +1,566 @@
+<title>visual_odometry.py — 逐行學習流程圖</title>
+<style>
+  :root {
+    --bg: #12171a;
+    --panel: #1a2124;
+    --panel-2: #202a2d;
+    --border: #2e3a3d;
+    --border-soft: #26302f;
+    --text: #e7ecea;
+    --text-dim: #8fa39c;
+    --text-faint: #5d6e69;
+    --accent: #5fd0a8;
+    --accent-soft: rgba(95, 208, 168, 0.12);
+    --accent-border: rgba(95, 208, 168, 0.4);
+    --warn: #e8a23d;
+    --warn-soft: rgba(232, 162, 61, 0.12);
+    --warn-border: rgba(232, 162, 61, 0.45);
+    --code-bg: #0e1214;
+    --mono: ui-monospace, "SF Mono", "JetBrains Mono", "Cascadia Code", Consolas, "Liberation Mono", monospace;
+    --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+  }
+  :root[data-theme="light"] {
+    --bg: #f3f6f4;
+    --panel: #ffffff;
+    --panel-2: #eef2ef;
+    --border: #d5ded9;
+    --border-soft: #e2e9e5;
+    --text: #16211f;
+    --text-dim: #536861;
+    --text-faint: #94a29c;
+    --accent: #1c8f6a;
+    --accent-soft: rgba(28, 143, 106, 0.08);
+    --accent-border: rgba(28, 143, 106, 0.35);
+    --warn: #a8690a;
+    --warn-soft: rgba(168, 105, 10, 0.09);
+    --warn-border: rgba(168, 105, 10, 0.4);
+    --code-bg: #eef2ef;
+  }
+  @media (prefers-color-scheme: light) {
+    :root:not([data-theme="dark"]) {
+      --bg: #f3f6f4; --panel: #ffffff; --panel-2: #eef2ef; --border: #d5ded9; --border-soft: #e2e9e5;
+      --text: #16211f; --text-dim: #536861; --text-faint: #94a29c;
+      --accent: #1c8f6a; --accent-soft: rgba(28, 143, 106, 0.08); --accent-border: rgba(28, 143, 106, 0.35);
+      --warn: #a8690a; --warn-soft: rgba(168, 105, 10, 0.09); --warn-border: rgba(168, 105, 10, 0.4);
+      --code-bg: #eef2ef;
+    }
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    padding: 0 0 96px;
+  }
+  .page { max-width: 780px; margin: 0 auto; padding: 48px 20px 0; }
+
+  header { margin-bottom: 28px; }
+  .eyebrow {
+    font-family: var(--mono); font-size: 12px; letter-spacing: 0.12em; text-transform: uppercase;
+    color: var(--accent); margin: 0 0 10px;
+  }
+  h1 { font-family: var(--mono); font-size: 25px; font-weight: 700; margin: 0 0 10px; text-wrap: balance; letter-spacing: -0.01em; }
+  header p { font-size: 14.5px; line-height: 1.65; color: var(--text-dim); max-width: 62ch; margin: 0 0 4px; }
+
+  nav.toc {
+    margin-top: 22px; padding: 16px 18px; background: var(--panel); border: 1px solid var(--border); border-radius: 8px;
+  }
+  nav.toc .toc-title { font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-faint); margin-bottom: 10px; }
+  nav.toc ol { margin: 0; padding-left: 0; list-style: none; display: grid; grid-template-columns: 1fr 1fr; gap: 6px 18px; }
+  nav.toc a { font-family: var(--mono); font-size: 12.5px; color: var(--text); text-decoration: none; border-bottom: 1px solid transparent; }
+  nav.toc a:hover, nav.toc a:focus-visible { color: var(--accent); border-bottom-color: var(--accent-border); }
+  nav.toc .n { color: var(--text-faint); margin-right: 6px; }
+
+  section.stage { max-width: 780px; margin: 0 auto; padding: 0 20px; }
+  .stage-head {
+    display: flex; align-items: baseline; gap: 12px; margin: 56px 0 18px;
+    padding-bottom: 10px; border-bottom: 1px solid var(--border);
+  }
+  .stage-num { font-family: var(--mono); font-size: 12px; color: var(--accent); }
+  .stage-head h2 { font-family: var(--mono); font-size: 17px; margin: 0; font-weight: 700; }
+  .stage-desc { font-size: 13px; color: var(--text-dim); margin: -6px 0 22px; line-height: 1.6; max-width: 62ch; }
+
+  .fn-card {
+    background: var(--panel); border: 1px solid var(--border); border-radius: 8px; margin-bottom: 22px; overflow: hidden;
+    scroll-margin-top: 20px;
+  }
+  .fn-head {
+    display: flex; align-items: center; justify-content: space-between; gap: 10px;
+    padding: 12px 16px; border-bottom: 1px solid var(--border-soft); background: var(--panel-2);
+  }
+  .fn-name { font-family: var(--mono); font-size: 13.5px; font-weight: 600; color: var(--text); }
+  .fn-name .paren { color: var(--text-faint); font-weight: 400; }
+  .fn-tag {
+    font-family: var(--mono); font-size: 10px; letter-spacing: 0.06em; text-transform: uppercase;
+    padding: 2px 8px; border-radius: 999px; border: 1px solid var(--accent-border); color: var(--accent); background: var(--accent-soft);
+    white-space: nowrap;
+  }
+  .fn-tag.helper { border-color: var(--border); color: var(--text-faint); background: transparent; }
+
+  pre.code {
+    margin: 0; padding: 14px 16px; overflow-x: auto; background: var(--code-bg);
+    font-family: var(--mono); font-size: 12px; line-height: 1.65; color: var(--text);
+    border-bottom: 1px solid var(--border-soft);
+  }
+  pre.code code { white-space: pre; }
+
+  .explain { padding: 14px 16px 16px; }
+  .explain p { margin: 0 0 10px; font-size: 13.5px; line-height: 1.7; color: var(--text-dim); }
+  .explain p:last-child { margin-bottom: 0; }
+  .explain strong { color: var(--text); font-weight: 600; }
+  .explain code { font-family: var(--mono); font-size: 12px; color: var(--text); background: var(--panel-2); padding: 1px 5px; border-radius: 3px; }
+  .explain ul { margin: 8px 0 10px; padding-left: 20px; }
+  .explain li { font-size: 13.5px; line-height: 1.7; color: var(--text-dim); margin-bottom: 4px; }
+
+  .concept {
+    margin: 0 16px 16px; padding: 12px 14px; border-left: 3px solid var(--accent-border);
+    background: var(--accent-soft); border-radius: 0 6px 6px 0;
+  }
+  .concept .concept-label {
+    font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--accent); margin-bottom: 6px;
+  }
+  .concept p { margin: 0; font-size: 13px; line-height: 1.7; color: var(--text); }
+
+  .connector { width: 1.5px; height: 22px; background: var(--border); margin: 0 auto; position: relative; }
+  .connector::after {
+    content: ""; position: absolute; bottom: -1px; left: 50%; transform: translateX(-50%);
+    width: 0; height: 0; border-left: 4px solid transparent; border-right: 4px solid transparent; border-top: 6px solid var(--border);
+  }
+
+  footer {
+    max-width: 780px; margin: 56px auto 0; padding: 20px 20px 0; border-top: 1px solid var(--border-soft);
+    font-family: var(--mono); font-size: 11px; color: var(--text-faint); line-height: 1.7;
+  }
+
+  @media (max-width: 560px) {
+    nav.toc ol { grid-template-columns: 1fr; }
+  }
+</style>
+
+<div class="page">
+  <header>
+    <p class="eyebrow">gpsless_VO_image · 學習用逐函式解說</p>
+    <h1>visual_odometry.py</h1>
+    <p>把整支程式拆成 13 個函式，依照執行順序逐一附上原始碼跟白話說明。跟著「輸入 → 特徵比對 → 位移換算 → 整段序列 → CLI」這條主線讀下去，應該就能看懂整個 GPS-less VO 是怎麼運作的。</p>
+    <nav class="toc">
+      <div class="toc-title">目錄</div>
+      <ol>
+        <li><a href="#list_images"><span class="n">01</span>list_images()</a></li><li><a href="#parse_altitude_m"><span class="n">02</span>parse_altitude_m()</a></li>
+        <li><a href="#parse_gps"><span class="n">03</span>parse_gps()</a></li><li><a href="#haversine_m"><span class="n">04</span>haversine_m()</a></li>
+        <li><a href="#_central_crop"><span class="n">05</span>_central_crop()</a></li><li><a href="#_make_detector"><span class="n">06</span>_make_detector()</a></li>
+        <li><a href="#detect_and_match"><span class="n">07</span>detect_and_match()</a></li><li><a href="#estimate_similarity"><span class="n">08</span>estimate_similarity()</a></li>
+        <li><a href="#displacement_from_transform"><span class="n">09</span>displacement_from_transform()</a></li><li><a href="#process_pair"><span class="n">10</span>process_pair()</a></li>
+        <li><a href="#process_pair_arrays"><span class="n">11</span>process_pair_arrays()</a></li><li><a href="#run"><span class="n">12</span>run()</a></li>
+        <li><a href="#main"><span class="n">13</span>main()</a></li>
+      </ol>
+    </nav>
+  </header>
+</div>
+
+
+<section class="stage">
+  <div class="stage-head"><span class="stage-num">01</span><h2>輸入處理 — 決定拍照順序、讀高度、讀驗證用 GPS</h2></div>
+  <div class="stage-desc">這一段完全不碰影像內容，只處理檔案本身：哪張先拍、每張的高度是多少、檔名裡有沒有可以拿來驗證答案的真實 GPS。</div>
+
+
+<div class="fn-card" id="list_images">
+  <div class="fn-head">
+    <div class="fn-name">list_images<span class="paren">(paths)</span></div>
+    <div class="fn-tag">入口</div>
+  </div>
+  <pre class="code"><code>def list_images(paths):
+    &quot;&quot;&quot;Expand directories, then order frames by capture time (mtime).
+
+    On the real drone, feed this script the photos in capture order (or
+    give filenames that sort chronologically); mtime is only a convenience
+    for this offline test set, since the GPS coordinates baked into these
+    filenames are NOT in flight order.
+    &quot;&quot;&quot;
+    files = []
+    for p in paths:
+        if os.path.isdir(p):
+            for name in os.listdir(p):
+                if name.lower().endswith((&#x27;.png&#x27;, &#x27;.jpg&#x27;, &#x27;.jpeg&#x27;)):
+                    files.append(os.path.join(p, name))
+        else:
+            files.append(p)
+    files.sort(key=os.path.getmtime)
+    return files</code></pre>
+  <div class="explain"><p>把傳進來的路徑（可能是資料夾、也可能是一張張照片）展開成一份檔案清單，並依照檔案的<strong>修改時間（mtime）</strong>排序，當作拍攝的時間先後順序。</p>
+    <p>真正飛行時，因為是「邊拍邊處理」，順序自然就是對的；這裡用 mtime 排序，是因為離線測試用的 <code>photo_obtained/</code> 檔名裡帶的是 GPS 座標而不是時間戳記，沒辦法直接從檔名看出拍攝順序。</p></div>
+  <div class="concept"><div class="concept-label">注意</div><p>這是 3 張照片唯一用來決定「誰先誰後」的依據。如果照片是用 <code>cp</code> 複製過去、或是從別的地方下載下來的，mtime 可能會被重設成複製當下的時間，順序就會跟著錯掉。</p></div>
+</div>
+
+<div class="fn-card" id="parse_altitude_m">
+  <div class="fn-head">
+    <div class="fn-name">parse_altitude_m<span class="paren">(path)</span></div>
+    <div class="fn-tag helper">輸入</div>
+  </div>
+  <pre class="code"><code>def parse_altitude_m(path):
+    m = FILENAME_ALT_RE.search(os.path.basename(path))
+    return float(m.group(1)) if m else None</code></pre>
+  <div class="explain"><p>用正規表示式從檔名尾端抓出高度，例如 <code>..._60.0m.png</code> 會抓出 <code>60.0</code>。如果檔名不符合這個格式就回傳 <code>None</code>，之後會用 <code>config.REFERENCE_ALTITUDE_M</code>（預設高度）頂替。</p></div>
+  
+</div>
+
+<div class="fn-card" id="parse_gps">
+  <div class="fn-head">
+    <div class="fn-name">parse_gps<span class="paren">(path)</span></div>
+    <div class="fn-tag helper">輸入</div>
+  </div>
+  <pre class="code"><code>def parse_gps(path):
+    &quot;&quot;&quot;Ground-truth GPS from the filename, if present. VALIDATION ONLY —
+    never fed into the displacement estimate itself.&quot;&quot;&quot;
+    m = FILENAME_GPS_RE.match(os.path.basename(path))
+    if not m:
+        return None
+    return float(m.group(1)), float(m.group(2))</code></pre>
+  <div class="explain"><p>從檔名開頭抓出真實 GPS 座標（例如 <code>25.0432642_121.4743882-...</code>）。這個函式抓到的座標<strong>只會拿來跟演算法算出來的位移做事後比對</strong>，絕對不會被拿去當作演算法的輸入 —— 不然就是「作弊」，用答案去驗證答案。</p></div>
+  
+</div>
+
+<div class="fn-card" id="haversine_m">
+  <div class="fn-head">
+    <div class="fn-name">haversine_m<span class="paren">(lat1, lon1, lat2, lon2)</span></div>
+    <div class="fn-tag helper">輸入</div>
+  </div>
+  <pre class="code"><code>def haversine_m(lat1, lon1, lat2, lon2):
+    R = 6371000.0
+    p1, p2 = math.radians(lat1), math.radians(lat2)
+    dphi = math.radians(lat2 - lat1)
+    dlmb = math.radians(lon2 - lon1)
+    a = math.sin(dphi / 2) ** 2 + math.cos(p1) * math.cos(p2) * math.sin(dlmb / 2) ** 2
+    return 2 * R * math.asin(math.sqrt(a))</code></pre>
+  <div class="explain"><p>標準的<strong>大圓距離（Haversine）公式</strong>：地球是球面，兩個經緯度座標之間的實際距離不能直接用平面畢氏定理算，要用這個公式球面三角換算。這裡拿來把兩張照片檔名裡的真實 GPS 換算成「地面實際距離」，當作驗證用的正確答案。</p></div>
+  
+</div>
+<div class="connector"></div></section>
+
+<section class="stage">
+  <div class="stage-head"><span class="stage-num">02</span><h2>特徵比對 — 兩張照片裡，哪些點其實是同一個地方？</h2></div>
+  <div class="stage-desc">這是整支程式最核心的電腦視覺部分：在兩張照片裡各自找出「好認的點」（特徵點），然後把「同一個地方」在兩張照片裡的位置配對起來。</div>
+
+
+<div class="fn-card" id="_central_crop">
+  <div class="fn-head">
+    <div class="fn-name">_central_crop<span class="paren">(gray)</span></div>
+    <div class="fn-tag helper">前處理</div>
+  </div>
+  <pre class="code"><code>def _central_crop(gray):
+    h, w = gray.shape[:2]
+    f = config.CENTRAL_CROP_FRACTION
+    if f &gt;= 1.0:
+        return gray, (0, 0)
+    cw, ch = int(w * f), int(h * f)
+    x0, y0 = (w - cw) // 2, (h - ch) // 2
+    return gray[y0:y0 + ch, x0:x0 + cw], (x0, y0)</code></pre>
+  <div class="explain"><p>只取影像中央的一塊（預設 <code>config.CENTRAL_CROP_FRACTION = 0.8</code>，即中央 80%），把邊緣裁掉。這台 Jetson 用的 IMX219 鏡頭視角偏廣，靠近邊緣的地方會有明顯的魚眼變形（畫面裡的跑道、球場邊線靠近邊框會彎曲），這種變形不是單純的「旋轉＋縮放＋平移」能描述的，會讓後面的數學模型算錯，所以乾脆不用邊緣的點。</p></div>
+  
+</div>
+
+<div class="fn-card" id="_make_detector">
+  <div class="fn-head">
+    <div class="fn-name">_make_detector<span class="paren">()</span></div>
+    <div class="fn-tag helper">前處理</div>
+  </div>
+  <pre class="code"><code>def _make_detector():
+    if config.DETECTOR == &#x27;orb&#x27;:
+        return cv2.ORB_create(nfeatures=config.ORB_N_FEATURES), cv2.NORM_HAMMING
+    return cv2.SIFT_create(nfeatures=config.SIFT_N_FEATURES), cv2.NORM_L2</code></pre>
+  <div class="explain"><p>依照 <code>config.DETECTOR</code> 的設定，回傳 SIFT 或 ORB 其中一種「特徵偵測器」物件，以及對應要用哪種方式比較兩個特徵描述子的距離（SIFT 用 <code>NORM_L2</code> 歐氏距離，ORB 用 <code>NORM_HAMMING</code> 因為它的描述子是二進位的）。</p></div>
+  
+</div>
+
+<div class="fn-card" id="detect_and_match">
+  <div class="fn-head">
+    <div class="fn-name">detect_and_match<span class="paren">(gray1, gray2)</span></div>
+    <div class="fn-tag">核心</div>
+  </div>
+  <pre class="code"><code>def detect_and_match(gray1, gray2):
+    &quot;&quot;&quot;Returns matched point pairs (Nx2 arrays, in ORIGINAL full-frame pixel
+    coordinates) after Lowe&#x27;s ratio test.&quot;&quot;&quot;
+    crop1, off1 = _central_crop(gray1)
+    crop2, off2 = _central_crop(gray2)
+
+    detector, norm = _make_detector()
+    kp1, des1 = detector.detectAndCompute(crop1, None)
+    kp2, des2 = detector.detectAndCompute(crop2, None)
+    if des1 is None or des2 is None or len(kp1) &lt; 4 or len(kp2) &lt; 4:
+        return np.empty((0, 2)), np.empty((0, 2))
+
+    bf = cv2.BFMatcher(norm)
+    raw_matches = bf.knnMatch(des1, des2, k=2)
+    good = [m for m, n in raw_matches if n is not None and m.distance &lt; config.MATCH_RATIO * n.distance]
+
+    pts1 = np.float32([kp1[m.queryIdx].pt for m in good])
+    pts2 = np.float32([kp2[m.trainIdx].pt for m in good])
+    if len(pts1):
+        pts1 += np.array(off1)
+        pts2 += np.array(off2)
+    return pts1, pts2</code></pre>
+  <div class="explain"><p>這個函式做了四件事：</p>
+    <ul>
+      <li>對兩張照片各自做 <code>_central_crop()</code></li>
+      <li>用偵測器的 <code>detectAndCompute()</code> 在兩張照片裡各自找出一堆「特徵點＋描述子」——特徵點是「這裡有個好認的角落／紋理」的位置，描述子是一串數字，用來描述這個點附近長什麼樣子</li>
+      <li>用 <code>cv2.BFMatcher</code> 的 <code>knnMatch(..., k=2)</code>，幫第一張照片裡每個特徵點，在第二張照片裡找出「長得最像」跟「第二像」的兩個候選</li>
+      <li>套 <strong>Lowe's ratio test</strong>：只留下「最像的候選明顯比第二像的候選更像」的配對</li>
+    </ul>
+    <p>回傳的座標最後會加回裁切掉的偏移量（<code>off1</code>／<code>off2</code>），所以回傳的還是「整張原圖」的像素座標，不是裁切後的座標。</p></div>
+  <div class="concept"><div class="concept-label">概念：為什麼要比對「最像」和「第二像」兩個候選？</div><p>如果一張照片裡有大片草地或跑道這種<strong>重複紋理</strong>，某個點在另一張照片裡可能會有好幾個地方看起來都差不多像。這種情況下「最像」的那個很可能只是運氣好，不能相信。Lowe's ratio test 的邏輯是：只有當「最像」的候選遠遠拋開「第二像」的候選（差距超過 <code>config.MATCH_RATIO = 0.75</code>），才算是一個夠可靠、不含糊的配對。</p></div>
+</div>
+
+<div class="fn-card" id="estimate_similarity">
+  <div class="fn-head">
+    <div class="fn-name">estimate_similarity<span class="paren">(pts1, pts2)</span></div>
+    <div class="fn-tag">核心</div>
+  </div>
+  <pre class="code"><code>def estimate_similarity(pts1, pts2):
+    &quot;&quot;&quot;Fit pts2 ~= s*R*pts1 + t via RANSAC. Returns (M 2x3, inlier_mask).&quot;&quot;&quot;
+    if len(pts1) &lt; 4:
+        return None, None
+    M, inliers = cv2.estimateAffinePartial2D(
+        pts1, pts2,
+        method=cv2.RANSAC,
+        ransacReprojThreshold=config.RANSAC_REPROJ_THRESHOLD_PX,
+        confidence=0.99,
+    )
+    return M, inliers</code></pre>
+  <div class="explain"><p>拿上一步配對出來的點對，用 <code>cv2.estimateAffinePartial2D()</code> 搭配 <strong>RANSAC</strong> 演算法，擬合出一個 2×3 的矩陣 <code>M</code> —— 這個矩陣描述「一個統一的旋轉＋縮放＋平移」，能把第一張照片裡的點盡量對應到第二張照片裡配對到的位置。回傳的 <code>inliers</code> 是一個布林陣列，標記哪些配對點真的符合這個矩陣（其餘的視為誤配，直接忽略）。</p></div>
+  <div class="concept"><div class="concept-label">概念：RANSAC 在解決什麼問題？</div><p>前一步的配對裡，難免混著一些錯的配對（誤配）。RANSAC 的做法是：<strong>隨機抽幾個點算出一個候選模型，看看有多少其他點也符合這個模型，重複很多次，最後選「支持者最多」的那個模型</strong>。這樣就算配對裡混了不少雜訊，只要「正確的配對」佔多數，RANSAC 通常還是能找出正確的整體變換，並順便標出哪些點是雜訊（outlier）。</p></div>
+</div>
+<div class="connector"></div></section>
+
+<section class="stage">
+  <div class="stage-head"><span class="stage-num">03</span><h2>像素位移 → 實際公尺</h2></div>
+  <div class="stage-desc">上一段只算出「影像座標系裡」的一個變換矩陣，完全不知道公尺、公分這些真實世界的單位。這一段負責把它換算成「相機真的移動了幾公尺」。</div>
+
+
+<div class="fn-card" id="displacement_from_transform">
+  <div class="fn-head">
+    <div class="fn-name">displacement_from_transform<span class="paren">(M, altitude_m)</span></div>
+    <div class="fn-tag">核心</div>
+  </div>
+  <pre class="code"><code>def displacement_from_transform(M, altitude_m):
+    &quot;&quot;&quot;Convert a pts1-&gt;pts2 similarity transform into the camera&#x27;s own
+    metric displacement, expressed in image axes (x=image-right, y=image-down)
+    as they appeared in frame 1.
+
+    Reasoning: a stationary ground feature&#x27;s apparent position shifts
+    OPPOSITE to the camera&#x27;s own motion (walk forward, the ground appears to
+    flow backward under you). So we transform the image center through M to
+    see how a center-fixed feature appears to move, then negate that to get
+    the camera&#x27;s own translation.
+    &quot;&quot;&quot;
+    a, b, tx = M[0]
+    c, d, ty = M[1]
+    scale = math.sqrt(a * a + c * c)
+    theta_rad = math.atan2(c, a)  # apparent rotation of the world in-image
+
+    cx, cy = config.IMAGE_WIDTH / 2.0, config.IMAGE_HEIGHT / 2.0
+    center2 = np.array([a * cx + b * cy + tx, c * cx + d * cy + ty])
+    apparent_flow = center2 - np.array([cx, cy])
+    cam_shift_px = -apparent_flow  # camera&#x27;s own displacement, in pixels
+
+    gsd_x = altitude_m / config.FX_PIXELS
+    gsd_y = altitude_m / config.FY_PIXELS
+    dx_m = cam_shift_px[0] * gsd_x
+    dy_m = cam_shift_px[1] * gsd_y
+
+    return {
+        &#x27;dx_m&#x27;: dx_m,           # + = camera moved toward image-right
+        &#x27;dy_m&#x27;: dy_m,           # + = camera moved toward image-down
+        &#x27;magnitude_m&#x27;: math.hypot(dx_m, dy_m),
+        &#x27;yaw_change_deg&#x27;: -math.degrees(theta_rad),  # camera&#x27;s own yaw change
+        &#x27;scale&#x27;: scale,         # &gt;1: frame2 zoomed in =&gt; flew lower
+        &#x27;altitude_change_m&#x27;: altitude_m * (1.0 / scale - 1.0) if scale &gt; 0 else float(&#x27;nan&#x27;),
+    }</code></pre>
+  <div class="explain"><p>這是整支程式數學味最重的一個函式，拆解成幾步：</p>
+    <ul>
+      <li><strong>拆解矩陣</strong>：<code>M</code> 的四個係數 <code>a,b,c,d</code> 可以拆出 <code>scale</code>（縮放倍率）跟 <code>theta_rad</code>（世界看起來轉了幾度）</li>
+      <li><strong>算「畫面中心點」跑到哪裡去了</strong>：把影像正中央的座標 <code>(cx, cy)</code> 代入 <code>M</code>，看看它在第二張照片裡對應到哪裡，兩者的差 <code>apparent_flow</code> 就是「畫面中央這個點看起來移動了多少」</li>
+      <li><strong>反過來，取負號</strong>：地面上固定不動的東西，看起來會往相機移動的<strong>反方向</strong>流動（想像你往前走，地面看起來往後退）。所以要把 <code>apparent_flow</code> 取負號，才是相機自己真正移動的方向</li>
+      <li><strong>換算成公尺</strong>：用 <code>GSD = 高度 ÷ 焦距(像素)</code> 算出「每個像素代表多少公尺」，乘上剛剛算出的像素位移</li>
+    </ul>
+    <p>最後回傳的字典裡，<code>dx_m</code>／<code>dy_m</code> 是位移分量，<code>yaw_change_deg</code> 是相機自己轉了幾度，<code>scale</code> 則反過來能推算出高度變化了多少（飛高了會「縮小」、飛低了會「放大」）。</p></div>
+  <div class="concept"><div class="concept-label">這段數學已經用合成資料驗證過</div><p>拿一張真實照片，用已知的位移／旋轉量刻意「合成」出第二張照片，再丟回這個函式反推，結果跟已知答案誤差在 3 公分內 —— 代表這個換算公式本身是對的，準確度的瓶頸在特徵比對階段，不是這裡的數學。</p></div>
+</div>
+<div class="connector"></div></section>
+
+<section class="stage">
+  <div class="stage-head"><span class="stage-num">04</span><h2>整個序列的處理 — 把每一對照片串成一條軌跡</h2></div>
+  <div class="stage-desc">前面三段都只處理「一對」照片。這一段把它們組合起來，處理一整串照片，並且加上「這個結果可不可信」的把關機制。</div>
+
+
+<div class="fn-card" id="process_pair">
+  <div class="fn-head">
+    <div class="fn-name">process_pair<span class="paren">(path1, path2, alt1, alt2)</span></div>
+    <div class="fn-tag">整合</div>
+  </div>
+  <pre class="code"><code>def process_pair(path1, path2, alt1, alt2):
+    img1 = cv2.imread(path1, cv2.IMREAD_GRAYSCALE)
+    img2 = cv2.imread(path2, cv2.IMREAD_GRAYSCALE)
+    if img1 is None or img2 is None:
+        raise FileNotFoundError(f&quot;could not read {path1} or {path2}&quot;)
+    result = process_pair_arrays(img1, img2, alt1, alt2)
+    result[&#x27;from&#x27;], result[&#x27;to&#x27;] = path1, path2
+    return result</code></pre>
+  <div class="explain"><p>從硬碟讀兩張照片（轉灰階），檢查讀取成功後，直接呼叫 <code>process_pair_arrays()</code> 做真正的運算，只是多補上 <code>from</code>／<code>to</code> 兩個檔名欄位方便後面印報告。這是給「批次處理資料夾」用的入口。</p></div>
+  
+</div>
+
+<div class="fn-card" id="process_pair_arrays">
+  <div class="fn-head">
+    <div class="fn-name">process_pair_arrays<span class="paren">(gray1, gray2, alt1, alt2)</span></div>
+    <div class="fn-tag">整合</div>
+  </div>
+  <pre class="code"><code>def process_pair_arrays(gray1, gray2, alt1, alt2):
+    &quot;&quot;&quot;Same as process_pair(), but on already-decoded grayscale arrays —
+    used by the live capture loop, which never round-trips frames to disk.&quot;&quot;&quot;
+    pts1, pts2 = detect_and_match(gray1, gray2)
+    M, inliers = estimate_similarity(pts1, pts2)
+
+    n_matches = len(pts1)
+    n_inliers = int(inliers.sum()) if inliers is not None else 0
+    result = {
+        &#x27;n_matches&#x27;: n_matches,
+        &#x27;n_inliers&#x27;: n_inliers,
+        &#x27;ok&#x27;: False,
+        &#x27;confident&#x27;: False,
+    }
+    if M is None or inliers is None or n_inliers &lt; config.MIN_INLIERS:
+        result[&#x27;reason&#x27;] = &#x27;too few inliers&#x27;
+        return result
+
+    altitude_m = (alt1 + alt2) / 2.0 if (alt1 and alt2) else (alt1 or alt2 or config.REFERENCE_ALTITUDE_M)
+    disp = displacement_from_transform(M, altitude_m)
+    result.update(disp)
+    result[&#x27;ok&#x27;] = True
+    result[&#x27;altitude_used_m&#x27;] = altitude_m
+    result[&#x27;confident&#x27;] = (n_inliers / n_matches) &gt;= config.MIN_INLIER_RATIO
+    if not result[&#x27;confident&#x27;]:
+        result[&#x27;reason&#x27;] = &#x27;low inlier ratio (likely low image overlap or repetitive texture) -- displacement below is UNTRUSTED&#x27;
+    return result</code></pre>
+  <div class="explain"><p>跟 <code>process_pair()</code> 做一樣的事，差別是直接吃「已經讀進記憶體的影像陣列」，不用先寫檔再讀檔——這是專門給 <code>live_vo_gps.py</code> 即時拍照迴圈用的版本，省掉每一張都要存檔再讀檔的開銷。</p>
+    <p>核心邏輯是<strong>兩層信心把關</strong>：</p>
+    <ul>
+      <li>第一層：<code>n_inliers &lt; config.MIN_INLIERS</code> —— inlier 數量太少，代表 RANSAC 幾乎找不到一致的變換，直接判定失敗（<code>ok=False</code>）</li>
+      <li>第二層：<code>n_inliers / n_matches &lt; config.MIN_INLIER_RATIO</code> —— 就算 inlier 數量夠多，但佔全部配對的比例太低，代表可能是重複紋理造成的巧合，標記成 <code>confident=False</code>（結果還是會回傳，但標成不可信）</li>
+    </ul>
+    <p>這正是我們拿 <code>photo_obtained/</code> 那 3 張照片實測時，兩段位移都被標成 <code>LOW-CONFIDENCE</code> 的原因——兩張照片之間距離太遠、重疊區域太小。</p></div>
+  
+</div>
+
+<div class="fn-card" id="run">
+  <div class="fn-head">
+    <div class="fn-name">run<span class="paren">(image_paths, altitudes=None)</span></div>
+    <div class="fn-tag">整合</div>
+  </div>
+  <pre class="code"><code>def run(image_paths, altitudes=None):
+    frames = list_images(image_paths)
+    if len(frames) &lt; 2:
+        raise SystemExit(&quot;need at least 2 images&quot;)
+
+    if altitudes is None:
+        altitudes = [parse_altitude_m(f) for f in frames]
+
+    results = []
+    traj = [(0.0, 0.0)]
+    heading_deg = 0.0  # cumulative estimated yaw relative to frame 0
+
+    for i in range(len(frames) - 1):
+        r = process_pair(frames[i], frames[i + 1], altitudes[i], altitudes[i + 1])
+        results.append(r)
+        if r[&#x27;ok&#x27;] and r[&#x27;confident&#x27;]:
+            heading_deg += r[&#x27;yaw_change_deg&#x27;]
+            th = math.radians(heading_deg)
+            # rotate this leg&#x27;s image-frame displacement into frame-0&#x27;s reference frame
+            dx, dy = r[&#x27;dx_m&#x27;], r[&#x27;dy_m&#x27;]
+            wx = dx * math.cos(th) - dy * math.sin(th)
+            wy = dx * math.sin(th) + dy * math.cos(th)
+            px, py = traj[-1]
+            traj.append((px + wx, py + wy))
+        else:
+            traj.append(traj[-1])
+
+    return frames, results, traj</code></pre>
+  <div class="explain"><p>對一整個序列跑迴圈，每一段都呼叫 <code>process_pair()</code>，然後做<strong>軌跡累加</strong>：</p>
+    <ul>
+      <li>維護一個 <code>heading_deg</code>，每處理完一段有信心的結果，就把這段的 <code>yaw_change_deg</code> 累加進去 —— 代表「相對於第 0 張照片，目前轉了多少角度」</li>
+      <li>用這個累積角度，把這一段在「拍攝當下影像座標系」裡的位移 <code>(dx_m, dy_m)</code> 旋轉到「第 0 張照片」的參考座標系裡，再加到目前的累積位置上</li>
+      <li>如果這一段失敗或信心不足，位置原地不動，直接沿用上一步的座標</li>
+    </ul>
+    <p>這就是為什麼旋轉要先做——如果拍照途中相機轉了方向，後面的位移量必須先「轉回」統一的參考方向，才能正確疊加，不然軌跡的形狀會整個歪掉。</p></div>
+  
+</div>
+<div class="connector"></div></section>
+
+<section class="stage">
+  <div class="stage-head"><span class="stage-num">05</span><h2>CLI — 指令列進入點</h2></div>
+  <div class="stage-desc">使用者實際打指令執行這支程式時，最先跑到的地方。負責解析參數、呼叫上面整套邏輯、把結果格式化印出來。</div>
+
+
+<div class="fn-card" id="main">
+  <div class="fn-head">
+    <div class="fn-name">main<span class="paren">()</span></div>
+    <div class="fn-tag">入口</div>
+  </div>
+  <pre class="code"><code>def main():
+    ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    ap.add_argument(&#x27;paths&#x27;, nargs=&#x27;+&#x27;, help=&#x27;image files and/or a directory of images&#x27;)
+    ap.add_argument(&#x27;--altitude&#x27;, help=&#x27;comma-separated altitude (m) per frame, overrides filename parsing&#x27;)
+    args = ap.parse_args()
+
+    altitudes = None
+    if args.altitude:
+        altitudes = [float(x) for x in args.altitude.split(&#x27;,&#x27;)]
+
+    frames, results, traj = run(args.paths, altitudes)
+
+    print(f&quot;Sequence ({len(frames)} frames, ordered by capture time):&quot;)
+    for f in frames:
+        print(f&quot;  {f}&quot;)
+    print()
+
+    for r in results:
+        name1, name2 = os.path.basename(r[&#x27;from&#x27;]), os.path.basename(r[&#x27;to&#x27;])
+        if not r[&#x27;ok&#x27;]:
+            print(f&quot;[FAIL] {name1} -&gt; {name2}: {r[&#x27;n_inliers&#x27;]}/{r[&#x27;n_matches&#x27;]} inliers &quot;
+                  f&quot;-- {r.get(&#x27;reason&#x27;, &#x27;unknown&#x27;)}&quot;)
+            continue
+        tag = &quot;[OK]  &quot; if r[&#x27;confident&#x27;] else &quot;[LOW-CONFIDENCE]&quot;
+        print(f&quot;{tag} {name1} -&gt; {name2}&quot;)
+        if not r[&#x27;confident&#x27;]:
+            print(f&quot;       WARNING: {r[&#x27;reason&#x27;]}&quot;)
+        print(f&quot;       matches={r[&#x27;n_matches&#x27;]} inliers={r[&#x27;n_inliers&#x27;]} altitude_used={r[&#x27;altitude_used_m&#x27;]:.1f}m&quot;)
+        print(f&quot;       displacement: dx={r[&#x27;dx_m&#x27;]:+.2f}m dy={r[&#x27;dy_m&#x27;]:+.2f}m &quot;
+              f&quot;magnitude={r[&#x27;magnitude_m&#x27;]:.2f}m&quot;)
+        print(f&quot;       yaw_change={r[&#x27;yaw_change_deg&#x27;]:+.2f}deg altitude_change={r[&#x27;altitude_change_m&#x27;]:+.2f}m&quot;)
+
+        gps1, gps2 = parse_gps(r[&#x27;from&#x27;]), parse_gps(r[&#x27;to&#x27;])
+        if gps1 and gps2:
+            truth_m = haversine_m(gps1[0], gps1[1], gps2[0], gps2[1])
+            err = r[&#x27;magnitude_m&#x27;] - truth_m
+            print(f&quot;       ground truth (GPS in filename, validation only): {truth_m:.2f}m &quot;
+                  f&quot;(error {err:+.2f}m, {abs(err)/truth_m*100:.0f}%)&quot;)
+        print()
+
+    print(&quot;Estimated trajectory (meters, frame-0 reference, x=image-right/y=image-down axes):&quot;)
+    for f, (x, y) in zip(frames, traj):
+        print(f&quot;  {os.path.basename(f):55s} ({x:+7.2f}, {y:+7.2f})&quot;)</code></pre>
+  <div class="explain"><p>用 <code>argparse</code> 解析指令列參數（照片路徑、可選的 <code>--altitude</code>），呼叫 <code>run()</code> 拿到整個序列的結果，然後逐段印出：</p>
+    <ul>
+      <li><code>[FAIL]</code> —— inlier 太少，完全沒有可信的變換</li>
+      <li><code>[LOW-CONFIDENCE]</code> —— 有算出位移，但 inlier 比例不夠，標成不可信</li>
+      <li><code>[OK]</code> —— 有信心的結果</li>
+    </ul>
+    <p>如果檔名裡剛好帶有真實 GPS（<code>parse_gps()</code> 抓得到），還會額外印出真實距離跟誤差百分比，方便對照。最後印出整段累積軌跡表。</p></div>
+  
+</div>
+</section>
+
+<footer>
+  對應原始碼：gpsless_VO_image/visual_odometry.py（github.com/Scott-Taiwan/VO-260726）<br/>
+  程式碼區塊是直接從原始檔案抓出來的，跟目前的原始碼保證一致。
+</footer>
