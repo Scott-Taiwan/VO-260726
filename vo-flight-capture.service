@@ -1,0 +1,29 @@
+[Unit]
+Description=GPS-less VO flight photo capture (logging only, never writes to Pixhawk)
+After=multi-user.target
+
+[Service]
+Type=simple
+User=scott
+WorkingDirectory=/home/scott/claude-project/gpsless_VO_run1/gpsless_VO_image
+ExecStart=/usr/bin/python3 -u vo_flight_capture.py --port /dev/ttyTHS1 --baud 57600
+
+# Retry if the Pixhawk isn't powered/connected yet when the Jetson boots --
+# connect_pixhawk() gives up after a 10s heartbeat timeout and exits non-zero,
+# so this restarts the attempt every 5s, indefinitely (StartLimitIntervalSec=0
+# disables systemd's default 5-tries-in-10s burst limit). A CLEAN exit (the
+# script's own landing detection stopping it after a real flight) is exit 0,
+# which does NOT trigger a restart -- only connection failures do.
+Restart=on-failure
+RestartSec=5
+StartLimitIntervalSec=0
+
+# `systemctl stop` sends this signal. Must be SIGINT (not the SIGTERM
+# default) so vo_flight_capture.py's `except KeyboardInterrupt: ... finally:
+# cap.release()` actually runs -- a bare SIGTERM skips that and can leave the
+# CSI camera session wedged, same issue already hit once during testing.
+KillSignal=SIGINT
+TimeoutStopSec=10
+
+[Install]
+WantedBy=multi-user.target

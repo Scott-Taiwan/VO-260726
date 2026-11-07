@@ -128,6 +128,7 @@ def resolve_anchor(conn, args):
         heading = read_heading(conn, timeout=10)
 
     if lat is None or lon is None:
+        sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'gpsless_mapping'))
         from gps_sim import load_cached_home
         cached = load_cached_home()
         if cached:
@@ -173,6 +174,7 @@ def main():
     send_gps_input = None
     if not args.dry_run:
         conn = connect_pixhawk(args.port, args.baud)
+        sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'gpsless_mapping'))
         from gps_sim import send_gps_input, maps_url
     else:
         def maps_url(lat, lon):

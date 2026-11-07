@@ -1,2 +1,7 @@
 __pycache__/
 *.pyc
+
+# runtime artifacts from run_vo_flight_capture*.sh -- not source, don't commit
+*.pid
+*.pid.log
+logs/
