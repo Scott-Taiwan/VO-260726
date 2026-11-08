@@ -49,9 +49,23 @@ import visual_odometry as vo  # noqa: E402
 from dead_reckoning import PositionTracker  # noqa: E402
 
 
-def gstreamer_pipeline(sensor_id=0, width=config.IMAGE_WIDTH, height=config.IMAGE_HEIGHT, flip_method=0):
+def gstreamer_pipeline(
+    sensor_id=0, width=config.IMAGE_WIDTH, height=config.IMAGE_HEIGHT, flip_method=0,
+    exposure_time_range_ns=config.EXPOSURE_TIME_RANGE_NS,
+    gain_range=config.GAIN_RANGE,
+    isp_digital_gain_range=config.ISP_DIGITAL_GAIN_RANGE,
+):
+    # exposuretimerange/gainrange/ispdigitalgainrange cap the shutter speed
+    # (see config.py's "Camera exposure/shutter override" section for why --
+    # default auto-exposure was smearing ground texture into motion blur).
+    exposure_str = f"{exposure_time_range_ns[0]} {exposure_time_range_ns[1]}"
+    gain_str = f"{gain_range[0]} {gain_range[1]}"
+    isp_gain_str = f"{isp_digital_gain_range[0]} {isp_digital_gain_range[1]}"
     return (
-        f"nvarguscamerasrc sensor-id={sensor_id} ! "
+        f"nvarguscamerasrc sensor-id={sensor_id} "
+        f'exposuretimerange="{exposure_str}" '
+        f'gainrange="{gain_str}" '
+        f'ispdigitalgainrange="{isp_gain_str}" ! '
         f"video/x-raw(memory:NVMM), width={width}, height={height}, "
         f"format=NV12, framerate=30/1 ! "
         f"nvvidconv flip-method={flip_method} ! "

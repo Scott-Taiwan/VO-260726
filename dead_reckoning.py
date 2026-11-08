@@ -71,7 +71,15 @@ class PositionTracker:
 
         self.lat += north_m / 111111.0
         self.lon += east_m / (111111.0 * math.cos(math.radians(self.lat)))
-        self.alt_m += vo_result['altitude_change_m']
+        # self.alt_m accumulates with += across the whole flight, so a single
+        # non-finite altitude_change_m (NaN/inf, from a degenerate transform
+        # upstream) would permanently poison every altitude reading for the
+        # rest of the flight. visual_odometry.py / vo_flight_capture.py
+        # already guard against producing one, but check here too since this
+        # is the one place every caller's leg passes through.
+        altitude_change_m = vo_result['altitude_change_m']
+        if math.isfinite(altitude_change_m):
+            self.alt_m += altitude_change_m
 
         if vo_result['confident']:
             growth = config.HACC_GROWTH_FRACTION_CONFIDENT * vo_result['magnitude_m']

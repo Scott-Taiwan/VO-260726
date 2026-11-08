@@ -21,15 +21,18 @@ Startup sequence, printed to the terminal as it happens:
      PASS/FAIL result is printed clearly either way.
   4. Start capturing immediately -- no altitude wait.
 
-No automatic landing-stop: unlike vo_flight_capture.py, this variant has no
-altitude-based auto-stop at all -- it keeps capturing indefinitely,
-including through ground-level/handheld testing where altitude may
-casually cross back and forth near any fixed threshold. Ctrl+C is the only
-way to stop it. (An earlier version tried to auto-stop on landing using
-the same AGL-dip logic as vo_flight_capture.py; that falsely triggered
-during a handheld test where altitude hovered right around the 2m
-threshold -- "capturing regardless of altitude" is this script's entire
-point, so that logic was removed rather than tuned.)
+Automatic landing-stop: unlike the first version of this script, it now DOES
+auto-stop once it's confident the aircraft has landed -- but only after it
+has actually seen AGL go above --land-altitude-m at least once (so pure
+ground-level/handheld testing that never climbs above that is completely
+unaffected and only stops on Ctrl+C, exactly like before). Once airborne,
+landing requires LAND_DEBOUNCE_FRAMES consecutive readings below
+--land-altitude-m, not just one -- a single reading was tried first and
+falsely triggered during a handheld test where altitude hovered right
+around the 2m threshold (agl=2.0m, 1.9m, 2.0m, 1.9m ...); requiring several
+consecutive low readings in a row (~6s at the default 2s interval) fixes
+that while still auto-stopping promptly on a real landing. Ctrl+C still
+works at any time, before or after takeoff is detected.
 
 Usage:
     python3 vo_flight_capture_always.py --port /dev/ttyTHS1
@@ -61,6 +64,8 @@ def main():
                           'each run gets its own timestamped subfolder underneath this')
     ap.add_argument('--wave-seconds', type=int, default=3,
                      help='seconds to rotate/move the camera for during the startup self-check (default 3)')
+    ap.add_argument('--land-altitude-m', type=float, default=2.0,
+                     help='AGL (m) below which, once airborne, the run auto-stops as "landed" (default 2)')
     args = ap.parse_args()
 
     base_out_dir = args.out_dir or os.path.join(os.path.dirname(os.path.abspath(__file__)), 'photo_obtained')
@@ -121,12 +126,15 @@ def main():
         n_frame = 0
         n_save_failures = 0
         agg_distance_m = 0.0
+        has_landed = False
+        has_been_airborne = False
+        land_debounce_count = 0
 
         stuck_check_frame = 0
         stuck_check_real_latlon = None
         stuck_check_agg_distance_m = 0.0
 
-        while True:
+        while not has_landed:
             frame, gray = vfc.capture_gray(cap)
             now = time.time()
             if frame is None:
@@ -205,6 +213,30 @@ def main():
                 stuck_check_real_latlon = (real_lat, real_lon)
                 stuck_check_agg_distance_m = agg_distance_m
                 stuck_check_frame = n_frame
+
+            # Landing auto-stop: only armed once AGL has actually gone above
+            # the land threshold at least once, so ground-level/handheld
+            # testing that never climbs that high is unaffected and only
+            # stops on Ctrl+C. Once airborne, requires LAND_DEBOUNCE_FRAMES
+            # consecutive low readings (see its definition in
+            # vo_flight_capture.py for why a single reading isn't enough).
+            if cur_alt_agl > args.land_altitude_m:
+                has_been_airborne = True
+
+            if has_been_airborne and cur_alt_agl < args.land_altitude_m:
+                land_debounce_count += 1
+                if land_debounce_count < vfc.LAND_DEBOUNCE_FRAMES:
+                    print(f"Relative altitude {cur_alt_agl:.1f}m < land threshold "
+                          f"{args.land_altitude_m:.1f}m ({land_debounce_count}/{vfc.LAND_DEBOUNCE_FRAMES} "
+                          f"consecutive reading(s) -- waiting for confirmation before stopping).")
+                else:
+                    print(f"\nRelative altitude {cur_alt_agl:.1f}m < land threshold "
+                          f"{args.land_altitude_m:.1f}m for {vfc.LAND_DEBOUNCE_FRAMES} consecutive readings "
+                          f"— landed, stopping.")
+                    has_landed = True
+                    continue
+            else:
+                land_debounce_count = 0
 
             elapsed = time.time() - now
             time.sleep(max(0.0, args.interval - elapsed))

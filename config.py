@@ -27,6 +27,24 @@ FY_PIXELS = (IMAGE_HEIGHT / 2) * (REFERENCE_ALTITUDE_M / (FOOTPRINT_HEIGHT_M / 2
 # rectilinear. 1.0 = use the full frame, 0.8 = use the central 80%.
 CENTRAL_CROP_FRACTION = 0.8
 
+# ── Camera exposure/shutter override (nvarguscamerasrc) ─────────────────────
+# Default auto-exposure picks exposure times close to the full 1/framerate
+# interval (~33ms at 30fps) in daylight, long enough to visibly motion-blur
+# the ground texture at normal flight speed/altitude-change rate (confirmed
+# 2026-11-08 on the three test flights in flight_analysis_20261108/ -- grass
+# texture smeared into directional streaks, degrading SIFT match/inlier
+# counts). Capping the max exposure time forces a faster shutter; gain is
+# raised to compensate for the resulting loss of brightness.
+#
+# Measured on this rig's IMX219 2026-11-08 via:
+#   gst-launch-1.0 nvarguscamerasrc num-buffers=3 ! fakesink   (GST_DEBUG=3)
+# which dumps the sensor's actual supported ranges (same across all sensor
+# modes, 1280x720 included): exposure 13,000-683,709,000 ns,
+# analog gain 1.0-10.625x. Stay within these hardware limits.
+EXPOSURE_TIME_RANGE_NS = (1_000_000, 5_000_000)   # 1-5ms, vs ~33ms default -- re-tune in daylight vs overcast
+GAIN_RANGE = (1.0, 10.625)                         # full analog gain headroom, to offset the shorter exposure
+ISP_DIGITAL_GAIN_RANGE = (1.0, 4.0)                # additional ISP-stage digital gain
+
 # ── Feature matching ─────────────────────────────────────────────────────────
 DETECTOR = 'sift'          # 'sift' or 'orb'
 SIFT_N_FEATURES = 4000
@@ -39,6 +57,19 @@ MIN_INLIERS = 12           # below this, the pair's displacement is unreliable
 # small fraction of matches actually agree. Same guard used in the sibling
 # gpsless_superpoint project for the same reason.
 MIN_INLIER_RATIO = 0.30
+
+# altitude_change_m is derived from the transform's scale as
+# altitude_m * (1/scale - 1) -- the 1/scale term blows up to a huge value
+# (or NaN, if scale is exactly 0) for a near-degenerate RANSAC fit, which
+# would otherwise permanently poison PositionTracker.alt_m (it accumulates
+# with +=, so one NaN/huge leg corrupts every altitude reading for the rest
+# of the flight -- confirmed happening on the 2026-11-08 flights, see
+# flight_analysis_20261108/). A real one-leg altitude change (a couple of
+# seconds apart) should keep scale close to 1.0; outside this range the fit
+# is treated as not carrying usable altitude information, and
+# altitude_change_m falls back to 0.0 (no altitude update that leg) instead
+# of a NaN/wild value.
+SCALE_SANE_RANGE = (0.3, 3.0)
 
 # ── Dead reckoning / MAVLink GPS_INPUT bridge ────────────────────────────────
 # Compass heading (deg, clockwise from North) that the CAMERA's "image up"

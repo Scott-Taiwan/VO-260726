@@ -162,13 +162,21 @@ def displacement_from_transform(M, altitude_m):
     dx_m = cam_shift_px[0] * gsd_x
     dy_m = cam_shift_px[1] * gsd_y
 
+    # See config.SCALE_SANE_RANGE's comment -- 1/scale blows up to a huge or
+    # NaN value for a near-degenerate fit, which would otherwise permanently
+    # poison PositionTracker.alt_m (it accumulates with +=).
+    scale_lo, scale_hi = config.SCALE_SANE_RANGE
+    altitude_change_m = (
+        altitude_m * (1.0 / scale - 1.0) if scale_lo <= scale <= scale_hi else 0.0
+    )
+
     return {
         'dx_m': dx_m,           # + = camera moved toward image-right
         'dy_m': dy_m,           # + = camera moved toward image-down
         'magnitude_m': math.hypot(dx_m, dy_m),
         'yaw_change_deg': -math.degrees(theta_rad),  # camera's own yaw change
         'scale': scale,         # >1: frame2 zoomed in => flew lower
-        'altitude_change_m': altitude_m * (1.0 / scale - 1.0) if scale > 0 else float('nan'),
+        'altitude_change_m': altitude_change_m,
     }
 
 

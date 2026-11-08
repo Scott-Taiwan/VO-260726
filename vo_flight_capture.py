@@ -130,6 +130,17 @@ STUCK_CHECK_INTERVAL_FRAMES = 10   # check every N frames (~20s at the default 2
 STUCK_REAL_MOVE_THRESHOLD_M = 3.0  # real GPS must have moved at least this much to count as "flying"
 STUCK_VO_MOVE_THRESHOLD_M = 0.5    # VO's odometer barely moving despite that = suspicious
 
+# Landing auto-stop requires this many CONSECUTIVE captured frames with AGL
+# below --land-altitude-m before declaring "landed" -- a single reading is
+# not enough, since GPS/baro noise can make altitude briefly dip below the
+# threshold while still genuinely airborne (this is exactly what caused a
+# false-positive stop during handheld testing of vo_flight_capture_always.py
+# on 2026-11-08, where altitude hovered right around the 2m threshold:
+# agl=2.0m, 1.9m, 2.0m, 1.9m ... -- a single-reading check stopped
+# mid-test). 3 frames at the default 2s interval is ~6s of sustained
+# low altitude.
+LAND_DEBOUNCE_FRAMES = 3
+
 # One-time self-check on the SAME camera session used for the whole flight
 # (opened once, never closed/reopened -- see self_check_camera() below for
 # why that matters). Same pixel-diff threshold calibrated in
@@ -175,13 +186,18 @@ def _displacement_from_transform(M, altitude_m):
     dx_m = cam_shift_px[0] * gsd_x
     dy_m = cam_shift_px[1] * gsd_y
 
+    scale_lo, scale_hi = config.SCALE_SANE_RANGE
+    altitude_change_m = (
+        altitude_m * (1.0 / scale - 1.0) if scale_lo <= scale <= scale_hi else 0.0
+    )
+
     return {
         'dx_m': dx_m,
         'dy_m': dy_m,
         'magnitude_m': math.hypot(dx_m, dy_m),
         'yaw_change_deg': -math.degrees(theta_rad),
         'scale': scale,
-        'altitude_change_m': altitude_m * (1.0 / scale - 1.0) if scale > 0 else float('nan'),
+        'altitude_change_m': altitude_change_m,
     }
 
 
@@ -211,6 +227,11 @@ def process_pair(gray1, gray2, alt1, alt2):
 # ── Camera (new camera's own resolution, explicit -- not config.py's) ──────
 
 def open_camera(sensor_id):
+    exp_lo_ms = config.EXPOSURE_TIME_RANGE_NS[0] / 1e6
+    exp_hi_ms = config.EXPOSURE_TIME_RANGE_NS[1] / 1e6
+    print(f"Camera shutter/exposure: exposuretimerange={exp_lo_ms:.2f}-{exp_hi_ms:.2f}ms  "
+          f"gainrange={config.GAIN_RANGE[0]:.1f}-{config.GAIN_RANGE[1]:.2f}x  "
+          f"ispdigitalgainrange={config.ISP_DIGITAL_GAIN_RANGE[0]:.1f}-{config.ISP_DIGITAL_GAIN_RANGE[1]:.1f}x")
     pipeline = gstreamer_pipeline(sensor_id=sensor_id, width=IMAGE_WIDTH, height=IMAGE_HEIGHT)
     cap = cv2.VideoCapture(pipeline, cv2.CAP_GSTREAMER)
     if not cap.isOpened():
@@ -358,6 +379,7 @@ def main():
         n_save_failures = 0
         agg_distance_m = 0.0
         has_landed = False
+        land_debounce_count = 0
 
         # Checkpoint for stuck-camera detection -- reset every STUCK_CHECK_INTERVAL_FRAMES.
         stuck_check_frame = 0
@@ -446,10 +468,19 @@ def main():
                 stuck_check_frame = n_frame
 
             if cur_alt_agl < args.land_altitude_m:
-                print(f"\nRelative altitude {cur_alt_agl:.1f}m < land threshold "
-                      f"{args.land_altitude_m:.1f}m — landed, stopping.")
-                has_landed = True
-                continue
+                land_debounce_count += 1
+                if land_debounce_count < LAND_DEBOUNCE_FRAMES:
+                    print(f"Relative altitude {cur_alt_agl:.1f}m < land threshold "
+                          f"{args.land_altitude_m:.1f}m ({land_debounce_count}/{LAND_DEBOUNCE_FRAMES} "
+                          f"consecutive reading(s) -- waiting for confirmation before stopping).")
+                else:
+                    print(f"\nRelative altitude {cur_alt_agl:.1f}m < land threshold "
+                          f"{args.land_altitude_m:.1f}m for {LAND_DEBOUNCE_FRAMES} consecutive readings "
+                          f"— landed, stopping.")
+                    has_landed = True
+                    continue
+            else:
+                land_debounce_count = 0
 
             elapsed = time.time() - now
             time.sleep(max(0.0, args.interval - elapsed))
