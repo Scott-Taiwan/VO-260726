@@ -1,0 +1,510 @@
+<title>vo_flight_capture.py — 逐行學習流程圖</title>
+<style>
+  :root {
+    --bg: #12171a;
+    --panel: #1a2124;
+    --panel-2: #202a2d;
+    --border: #2e3a3d;
+    --border-soft: #26302f;
+    --text: #e7ecea;
+    --text-dim: #8fa39c;
+    --text-faint: #5d6e69;
+    --accent: #5fd0a8;
+    --accent-soft: rgba(95, 208, 168, 0.12);
+    --accent-border: rgba(95, 208, 168, 0.4);
+    --warn: #e8a23d;
+    --warn-soft: rgba(232, 162, 61, 0.12);
+    --warn-border: rgba(232, 162, 61, 0.45);
+    --code-bg: #0e1214;
+    --mono: ui-monospace, "SF Mono", "JetBrains Mono", "Cascadia Code", Consolas, "Liberation Mono", monospace;
+    --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+  }
+  :root[data-theme="light"] {
+    --bg: #f3f6f4;
+    --panel: #ffffff;
+    --panel-2: #eef2ef;
+    --border: #d5ded9;
+    --border-soft: #e2e9e5;
+    --text: #16211f;
+    --text-dim: #536861;
+    --text-faint: #94a29c;
+    --accent: #1c8f6a;
+    --accent-soft: rgba(28, 143, 106, 0.08);
+    --accent-border: rgba(28, 143, 106, 0.35);
+    --warn: #a8690a;
+    --warn-soft: rgba(168, 105, 10, 0.09);
+    --warn-border: rgba(168, 105, 10, 0.4);
+    --code-bg: #eef2ef;
+  }
+  @media (prefers-color-scheme: light) {
+    :root:not([data-theme="dark"]) {
+      --bg: #f3f6f4; --panel: #ffffff; --panel-2: #eef2ef; --border: #d5ded9; --border-soft: #e2e9e5;
+      --text: #16211f; --text-dim: #536861; --text-faint: #94a29c;
+      --accent: #1c8f6a; --accent-soft: rgba(28, 143, 106, 0.08); --accent-border: rgba(28, 143, 106, 0.35);
+      --warn: #a8690a; --warn-soft: rgba(168, 105, 10, 0.09); --warn-border: rgba(168, 105, 10, 0.4);
+      --code-bg: #eef2ef;
+    }
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    padding: 0 0 96px;
+  }
+  .page { max-width: 780px; margin: 0 auto; padding: 48px 20px 0; }
+
+  header { margin-bottom: 28px; }
+  .eyebrow {
+    font-family: var(--mono); font-size: 12px; letter-spacing: 0.12em; text-transform: uppercase;
+    color: var(--accent); margin: 0 0 10px;
+  }
+  h1 { font-family: var(--mono); font-size: 25px; font-weight: 700; margin: 0 0 10px; text-wrap: balance; letter-spacing: -0.01em; }
+  header p { font-size: 14.5px; line-height: 1.65; color: var(--text-dim); max-width: 62ch; margin: 0 0 4px; }
+
+  nav.toc {
+    margin-top: 22px; padding: 16px 18px; background: var(--panel); border: 1px solid var(--border); border-radius: 8px;
+  }
+  nav.toc .toc-title { font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-faint); margin-bottom: 10px; }
+  nav.toc ol { margin: 0; padding-left: 0; list-style: none; display: grid; grid-template-columns: 1fr 1fr; gap: 6px 18px; }
+  nav.toc a { font-family: var(--mono); font-size: 12.5px; color: var(--text); text-decoration: none; border-bottom: 1px solid transparent; }
+  nav.toc a:hover, nav.toc a:focus-visible { color: var(--accent); border-bottom-color: var(--accent-border); }
+  nav.toc .n { color: var(--text-faint); margin-right: 6px; }
+
+  section.stage { max-width: 780px; margin: 0 auto; padding: 0 20px; }
+  .stage-head {
+    display: flex; align-items: baseline; gap: 12px; margin: 56px 0 18px;
+    padding-bottom: 10px; border-bottom: 1px solid var(--border);
+  }
+  .stage-num { font-family: var(--mono); font-size: 12px; color: var(--accent); }
+  .stage-head h2 { font-family: var(--mono); font-size: 17px; margin: 0; font-weight: 700; }
+  .stage-desc { font-size: 13px; color: var(--text-dim); margin: -6px 0 22px; line-height: 1.6; max-width: 62ch; }
+
+  .fn-card {
+    background: var(--panel); border: 1px solid var(--border); border-radius: 8px; margin-bottom: 22px; overflow: hidden;
+    scroll-margin-top: 20px;
+  }
+  .fn-head {
+    display: flex; align-items: center; justify-content: space-between; gap: 10px;
+    padding: 12px 16px; border-bottom: 1px solid var(--border-soft); background: var(--panel-2);
+  }
+  .fn-name { font-family: var(--mono); font-size: 13.5px; font-weight: 600; color: var(--text); }
+  .fn-name .paren { color: var(--text-faint); font-weight: 400; }
+  .fn-tag {
+    font-family: var(--mono); font-size: 10px; letter-spacing: 0.06em; text-transform: uppercase;
+    padding: 2px 8px; border-radius: 999px; border: 1px solid var(--accent-border); color: var(--accent); background: var(--accent-soft);
+    white-space: nowrap;
+  }
+  .fn-tag.helper { border-color: var(--border); color: var(--text-faint); background: transparent; }
+
+  pre.code {
+    margin: 0; padding: 14px 16px; overflow-x: auto; background: var(--code-bg);
+    font-family: var(--mono); font-size: 12px; line-height: 1.65; color: var(--text);
+    border-bottom: 1px solid var(--border-soft);
+  }
+  pre.code code { white-space: pre; }
+
+  .explain { padding: 14px 16px 16px; }
+  .explain p { margin: 0 0 10px; font-size: 13.5px; line-height: 1.7; color: var(--text-dim); }
+  .explain p:last-child { margin-bottom: 0; }
+  .explain strong { color: var(--text); font-weight: 600; }
+  .explain code { font-family: var(--mono); font-size: 12px; color: var(--text); background: var(--panel-2); padding: 1px 5px; border-radius: 3px; }
+  .explain ul { margin: 8px 0 10px; padding-left: 20px; }
+  .explain li { font-size: 13.5px; line-height: 1.7; color: var(--text-dim); margin-bottom: 4px; }
+
+  .concept {
+    margin: 0 16px 16px; padding: 12px 14px; border-left: 3px solid var(--accent-border);
+    background: var(--accent-soft); border-radius: 0 6px 6px 0;
+  }
+  .concept .concept-label {
+    font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--accent); margin-bottom: 6px;
+  }
+  .concept p { margin: 0; font-size: 13px; line-height: 1.7; color: var(--text); }
+  .concept.warn { border-left-color: var(--warn-border); background: var(--warn-soft); }
+  .concept.warn .concept-label { color: var(--warn); }
+
+  .connector { width: 1.5px; height: 22px; background: var(--border); margin: 0 auto; position: relative; }
+  .connector::after {
+    content: ""; position: absolute; bottom: -1px; left: 50%; transform: translateX(-50%);
+    width: 0; height: 0; border-left: 4px solid transparent; border-right: 4px solid transparent; border-top: 6px solid var(--border);
+  }
+
+  footer {
+    max-width: 780px; margin: 56px auto 0; padding: 20px 20px 0; border-top: 1px solid var(--border-soft);
+    font-family: var(--mono); font-size: 11px; color: var(--text-faint); line-height: 1.7;
+  }
+
+  @media (max-width: 560px) {
+    nav.toc ol { grid-template-columns: 1fr; }
+  }
+</style>
+
+<div class="page">
+  <header>
+    <p class="eyebrow">gpsless_VO_image · 學習用逐函式解說</p>
+    <h1>vo_flight_capture.py</h1>
+    <p>從 <code>visual_odometry.py</code> 跟 <code>live_vo_gps.py</code> 衍生出來的全新腳本：換成水平視角 77 度的新鏡頭、拿掉中央裁切、只在起飛超過 40m 後才每 2 秒拍一張，並把每張照片存成一個帶有「真實 GPS vs VO 估算」比對欄位的檔名，降落後自動停止。這支程式<strong>只讀</strong> Pixhawk 遙測，不會把 VO 位置寫回飛控。</p>
+    <p>這頁把它拆成 11 個段落，依照執行順序附上原始碼跟白話說明，並在跟舊程式不一樣的地方特別標出來。</p>
+    <nav class="toc">
+      <div class="toc-title">目錄</div>
+      <ol>
+        <li><a href="#module_config"><span class="n">01</span>新相機常數</a></li><li><a href="#detect_and_match_full_frame"><span class="n">02</span>_detect_and_match_full_frame()</a></li>
+        <li><a href="#displacement_from_transform"><span class="n">03</span>_displacement_from_transform()</a></li><li><a href="#process_pair"><span class="n">04</span>process_pair()</a></li>
+        <li><a href="#reused_imports"><span class="n">05</span>沿用 live_vo_gps.py</a></li><li><a href="#open_camera"><span class="n">06</span>open_camera()</a></li>
+        <li><a href="#wait_for_takeoff"><span class="n">07</span>wait_for_takeoff()</a></li><li><a href="#main_setup"><span class="n">08</span>main() 初始化與錨點</a></li>
+        <li><a href="#main_loop"><span class="n">09</span>main() 主迴圈：VO</a></li><li><a href="#main_save"><span class="n">10</span>main() 組檔名與降落判斷</a></li>
+        <li><a href="#main_finish"><span class="n">11</span>main() 收尾與統計</a></li>
+      </ol>
+    </nav>
+  </header>
+</div>
+
+
+<section class="stage">
+  <div class="stage-head"><span class="stage-num">01</span><h2>新相機常數 — 為什麼要重算焦距、拿掉裁切</h2></div>
+  <div class="stage-desc">這支程式換了一顆水平視角 77 度的鏡頭，不再是舊魚眼鏡頭那樣邊緣嚴重畸變，所以裁切可以直接拿掉；但 <code>config.py</code> 裡的 <code>FX_PIXELS</code>／<code>FY_PIXELS</code> 是從舊鏡頭實測的地面涵蓋範圍反推出來的，套在新鏡頭上答案會整個錯，所以這支程式定義了自己的一組相機常數，完全不動 <code>config.py</code>（其他程式，例如 <code>process_dji_sequence.py</code>、<code>recompute_vo_trajectory.py</code>、<code>dead_reckoning.py</code> 的自我測試，還在用舊鏡頭的那組設定）。</div>
+
+
+<div class="fn-card" id="module_config">
+  <div class="fn-head">
+    <div class="fn-name">模組常數<span class="paren">（不是函式，程式一載入就算好）</span></div>
+    <div class="fn-tag helper">設定</div>
+  </div>
+  <pre class="code"><code># ── New camera: 77-deg HORIZONTAL FOV, no fisheye crop ──────────────────────
+# Only the horizontal FOV was specified, so this assumes square pixels
+# (fx == fy in pixel units) and derives the focal length from a plain
+# pinhole model rather than reusing config.py&#x27;s footprint-derived
+# FX_PIXELS/FY_PIXELS, which were empirically fit to the OLD ~166-deg
+# fisheye lens and do not apply here.
+IMAGE_WIDTH = 1280
+IMAGE_HEIGHT = 720
+CAMERA_HFOV_DEG = 77.0
+FX_PIXELS = (IMAGE_WIDTH / 2.0) / math.tan(math.radians(CAMERA_HFOV_DEG / 2.0))
+FY_PIXELS = FX_PIXELS  # square-pixel assumption -- see note above
+
+# No AGL reading available yet (e.g. first Pixhawk read glitches) -- use the
+# takeoff altitude itself as a fallback, since capture never starts below it.
+FALLBACK_ALTITUDE_M = 40.0</code></pre>
+  <div class="explain"><p>用最單純的<strong>針孔相機模型</strong>反推焦距（像素）：<code>fx = (影像寬度 ÷ 2) ÷ tan(水平視角 ÷ 2)</code>。因為只知道「水平」視角是 77 度，沒有另外量垂直視角，這裡假設像素是正方形（<code>fx = fy</code>），用同一個焦距值去換算垂直方向的公尺數。以 1280×720 代入，算出來 <code>FX_PIXELS = FY_PIXELS ≈ 804.6px</code>。</p>
+    <p><code>FALLBACK_ALTITUDE_M</code> 取代了原本 <code>config.REFERENCE_ALTITUDE_M</code>（60m，舊鏡頭的參考高度）當作「兩張照片都沒有可用高度時」的備援值，改用 40（跟起飛判斷用的高度門檻一致，因為這支程式本來就不會在 40m 以下開始拍照）。</p></div>
+  <div class="concept warn"><div class="concept-label">假設：水平視角只給了一個數字</div><p>如果之後量出鏡頭實際的垂直視角，或有精確的校正參數，應該直接把 <code>FY_PIXELS</code> 改成量出來的值，不要繼續套用「正方形像素」這個假設 —— 目前這只是在沒有更多資訊時的合理猜測，不是校正過的鏡頭規格。</p></div>
+</div>
+<div class="connector"></div></section>
+
+<section class="stage">
+  <div class="stage-head"><span class="stage-num">02</span><h2>特徵比對＋位移換算 — 這次不做中央裁切</h2></div>
+  <div class="stage-desc">跟 <code>visual_odometry.py</code> 幾乎一模一樣的核心演算法：RANSAC 擬合、兩層信心把關的邏輯完全沒變，唯二的差別是不呼叫 <code>_central_crop()</code>，以及用上一段新算出來的相機常數，而不是 <code>config.py</code> 裡的舊常數。</div>
+
+
+<div class="fn-card" id="detect_and_match_full_frame">
+  <div class="fn-head">
+    <div class="fn-name">_detect_and_match_full_frame<span class="paren">(gray1, gray2)</span></div>
+    <div class="fn-tag">核心</div>
+  </div>
+  <pre class="code"><code>def _detect_and_match_full_frame(gray1, gray2):
+    &quot;&quot;&quot;Same as visual_odometry.detect_and_match(), minus the central crop --
+    the 77-deg lens isn&#x27;t expected to have the old lens&#x27;s edge distortion,
+    so the full frame is used directly.&quot;&quot;&quot;
+    detector, norm = vo._make_detector()
+    kp1, des1 = detector.detectAndCompute(gray1, None)
+    kp2, des2 = detector.detectAndCompute(gray2, None)
+    if des1 is None or des2 is None or len(kp1) &lt; 4 or len(kp2) &lt; 4:
+        return np.empty((0, 2)), np.empty((0, 2))
+
+    bf = cv2.BFMatcher(norm)
+    raw_matches = bf.knnMatch(des1, des2, k=2)
+    good = [m for m, n in raw_matches if n is not None and m.distance &lt; config.MATCH_RATIO * n.distance]
+
+    pts1 = np.float32([kp1[m.queryIdx].pt for m in good])
+    pts2 = np.float32([kp2[m.trainIdx].pt for m in good])
+    return pts1, pts2</code></pre>
+  <div class="explain"><p>直接沿用 <code>visual_odometry.py</code> 的 <code>_make_detector()</code>（依 <code>config.DETECTOR</code> 決定用 SIFT 還是 ORB，這個設定跟相機鏡頭無關，所以不用重寫），對兩張<strong>完整原圖</strong>做 <code>detectAndCompute()</code>、<code>knnMatch(k=2)</code>、Lowe's ratio test。</p>
+    <p>跟原版 <code>detect_and_match()</code> 比起來，少了兩件事：沒有呼叫 <code>_central_crop()</code>，也沒有「把座標加回裁切偏移量」那一步 —— 因為根本沒裁切，偵測到的座標本來就已經是全圖座標，不需要再加回去。</p></div>
+
+</div>
+
+<div class="fn-card" id="displacement_from_transform">
+  <div class="fn-head">
+    <div class="fn-name">_displacement_from_transform<span class="paren">(M, altitude_m)</span></div>
+    <div class="fn-tag">核心</div>
+  </div>
+  <pre class="code"><code>def _displacement_from_transform(M, altitude_m):
+    &quot;&quot;&quot;Same math as visual_odometry.displacement_from_transform(), using
+    this script&#x27;s own IMAGE_WIDTH/HEIGHT/FX_PIXELS/FY_PIXELS.&quot;&quot;&quot;
+    a, b, tx = M[0]
+    c, d, ty = M[1]
+    scale = math.sqrt(a * a + c * c)
+    theta_rad = math.atan2(c, a)
+
+    cx, cy = IMAGE_WIDTH / 2.0, IMAGE_HEIGHT / 2.0
+    center2 = np.array([a * cx + b * cy + tx, c * cx + d * cy + ty])
+    apparent_flow = center2 - np.array([cx, cy])
+    cam_shift_px = -apparent_flow
+
+    gsd_x = altitude_m / FX_PIXELS
+    gsd_y = altitude_m / FY_PIXELS
+    dx_m = cam_shift_px[0] * gsd_x
+    dy_m = cam_shift_px[1] * gsd_y
+
+    return {
+        &#x27;dx_m&#x27;: dx_m,
+        &#x27;dy_m&#x27;: dy_m,
+        &#x27;magnitude_m&#x27;: math.hypot(dx_m, dy_m),
+        &#x27;yaw_change_deg&#x27;: -math.degrees(theta_rad),
+        &#x27;scale&#x27;: scale,
+        &#x27;altitude_change_m&#x27;: altitude_m * (1.0 / scale - 1.0) if scale &gt; 0 else float(&#x27;nan&#x27;),
+    }</code></pre>
+  <div class="explain"><p>跟 <code>visual_odometry.displacement_from_transform()</code> 逐行一模一樣的數學：拆解相似變換矩陣 <code>M</code> 得到縮放量跟旋轉角、算「畫面中心點」看起來跑到哪去了、取負號還原成相機自己的位移方向、再用 <code>GSD = 高度 ÷ 焦距</code> 換算成公尺。差別只在 <code>cx,cy</code> 用的是這支程式自己的 <code>IMAGE_WIDTH/IMAGE_HEIGHT</code>，<code>gsd_x,gsd_y</code> 用的是上一段新算出來的 <code>FX_PIXELS/FY_PIXELS</code>。</p></div>
+  <div class="concept"><div class="concept-label">為什麼直接照抄這段數學，不用重新驗證？</div><p><code>visual_odometry.py</code> 裡這段公式已經用合成資料驗證過，誤差在 3 公分內（見 <code>summary.md</code>）——這是純幾何／三角函數的推導，跟鏡頭視角無關，只要 <code>FX_PIXELS/FY_PIXELS</code> 跟 <code>IMAGE_WIDTH/IMAGE_HEIGHT</code> 換成新鏡頭的正確數值，同一套公式就一樣成立。真正還沒驗證過的是「新鏡頭反推出來的 <code>FX_PIXELS</code> 準不準」，不是這段數學本身。</p></div>
+</div>
+
+<div class="fn-card" id="process_pair">
+  <div class="fn-head">
+    <div class="fn-name">process_pair<span class="paren">(gray1, gray2, alt1, alt2)</span></div>
+    <div class="fn-tag">整合</div>
+  </div>
+  <pre class="code"><code>def process_pair(gray1, gray2, alt1, alt2):
+    &quot;&quot;&quot;Full-frame, 77-deg-camera equivalent of
+    visual_odometry.process_pair_arrays().&quot;&quot;&quot;
+    pts1, pts2 = _detect_and_match_full_frame(gray1, gray2)
+    M, inliers = vo.estimate_similarity(pts1, pts2)
+
+    n_matches = len(pts1)
+    n_inliers = int(inliers.sum()) if inliers is not None else 0
+    result = {&#x27;n_matches&#x27;: n_matches, &#x27;n_inliers&#x27;: n_inliers, &#x27;ok&#x27;: False, &#x27;confident&#x27;: False}
+    if M is None or inliers is None or n_inliers &lt; config.MIN_INLIERS:
+        result[&#x27;reason&#x27;] = &#x27;too few inliers&#x27;
+        return result
+
+    altitude_m = (alt1 + alt2) / 2.0 if (alt1 and alt2) else (alt1 or alt2 or FALLBACK_ALTITUDE_M)
+    result.update(_displacement_from_transform(M, altitude_m))
+    result[&#x27;ok&#x27;] = True
+    result[&#x27;altitude_used_m&#x27;] = altitude_m
+    result[&#x27;confident&#x27;] = (n_inliers / n_matches) &gt;= config.MIN_INLIER_RATIO
+    if not result[&#x27;confident&#x27;]:
+        result[&#x27;reason&#x27;] = &#x27;low inlier ratio -- displacement UNTRUSTED&#x27;
+    return result</code></pre>
+  <div class="explain"><p>把上面兩個函式接起來，並套用跟原版<strong>完全相同</strong>的兩層信心把關：<code>estimate_similarity()</code> 直接沿用 <code>visual_odometry.py</code> 的版本（RANSAC 擬合矩陣的邏輯，跟裁不裁切、哪台相機都無關）。</p>
+    <ul>
+      <li>第一層：<code>n_inliers &lt; config.MIN_INLIERS</code> —— inlier 太少，直接判定失敗</li>
+      <li>第二層：<code>n_inliers / n_matches &lt; config.MIN_INLIER_RATIO</code> —— 比例太低，標成 <code>confident=False</code>，位移還是會回傳但不可信</li>
+    </ul>
+    <p>這個函式在整個新程式的主迴圈裡，就是原版 <code>visual_odometry.process_pair_arrays()</code> 的角色 —— 讀記憶體裡的灰階陣列，不用先寫檔。</p></div>
+
+</div>
+<div class="connector"></div></section>
+
+<section class="stage">
+  <div class="stage-head"><span class="stage-num">03</span><h2>相機開啟與 Pixhawk 讀取 — 沿用 live_vo_gps.py</h2></div>
+  <div class="stage-desc">連 Pixhawk、讀 GPS／航向、開 CSI 相機的邏輯跟 <code>live_vo_gps.py</code> 完全一樣，這支程式直接 import 過來用，沒有重新寫一份。只有 <code>open_camera()</code> 因為要明確指定新相機的解析度，多包了一層。</div>
+
+
+<div class="fn-card" id="reused_imports">
+  <div class="fn-head">
+    <div class="fn-name">from live_vo_gps import (...)</div>
+    <div class="fn-tag helper">沿用</div>
+  </div>
+  <pre class="code"><code>from live_vo_gps import (  # noqa: E402
+    gstreamer_pipeline, capture_gray, connect_pixhawk,
+    read_global_position, read_heading,
+)</code></pre>
+  <div class="explain"><p>這五個函式全部是<strong>直接從 <code>live_vo_gps.py</code> import 過來</strong>，本檔案裡沒有另外定義：</p>
+    <ul>
+      <li><code>gstreamer_pipeline()</code> —— 組出 Jetson CSI 相機的 GStreamer pipeline 字串，接受 <code>width</code>／<code>height</code> 參數，所以可以指定新相機的解析度</li>
+      <li><code>capture_gray()</code> —— 從已開啟的相機讀一張影格，回傳彩色（存檔用）跟灰階（VO 用）兩份</li>
+      <li><code>connect_pixhawk(port, baud)</code> —— 用 <code>pymavlink</code> 連線、等待 heartbeat、訂閱資料流</li>
+      <li><code>read_global_position(conn, timeout)</code> —— 讀最新一筆 <code>GLOBAL_POSITION_INT</code>，回傳 <code>(lat, lon, alt_msl, alt_agl)</code></li>
+      <li><code>read_heading(conn, timeout)</code> —— 讀最新一筆 <code>VFR_HUD</code> 的真航向（度）</li>
+    </ul></div>
+  <div class="concept warn"><div class="concept-label">跟 live_vo_gps.py 的關鍵差異：完全不寫回 Pixhawk</div><p><code>live_vo_gps.py</code> 除了讀，還會呼叫 <code>gps_sim.send_gps_input()</code> 把 VO 估算位置持續送回飛控當 GPS2。這支程式<strong>只 import 讀取用的函式</strong>，從頭到尾沒有 import 也沒有呼叫任何送出 <code>GPS_INPUT</code> 的函式 —— 純粹是資料紀錄工具，真正飛的還是靠真實 GPS。</p></div>
+</div>
+
+<div class="fn-card" id="open_camera">
+  <div class="fn-head">
+    <div class="fn-name">open_camera<span class="paren">(sensor_id)</span></div>
+    <div class="fn-tag helper">相機</div>
+  </div>
+  <pre class="code"><code>def open_camera(sensor_id):
+    pipeline = gstreamer_pipeline(sensor_id=sensor_id, width=IMAGE_WIDTH, height=IMAGE_HEIGHT)
+    cap = cv2.VideoCapture(pipeline, cv2.CAP_GSTREAMER)
+    if not cap.isOpened():
+        raise RuntimeError(&quot;Could not open CSI camera — check sensor connection / nvargus-daemon.&quot;)
+    for _ in range(10):  # let exposure settle
+        cap.read()
+    return cap</code></pre>
+  <div class="explain"><p>跟 <code>live_vo_gps.py</code> 的 <code>open_camera()</code> 做一樣的事，但<strong>明確傳入</strong> <code>width=IMAGE_WIDTH, height=IMAGE_HEIGHT</code>（這支程式自己的 1280×720 常數），而不是讓 <code>gstreamer_pipeline()</code> 偷偷套用它自己 <code>config.IMAGE_WIDTH/IMAGE_HEIGHT</code> 的預設值。這兩組數字現在剛好一樣（都是 1280×720），但故意寫死傳入是為了不要之後 <code>config.py</code> 為了舊鏡頭改了解析度，這支程式的相機開啟行為卻悄悄跟著變。</p>
+    <p>開機後先丟掉前 10 個影格，讓自動曝光穩定下來（跟 <code>capture_sample.py</code> 的作法一樣）。</p></div>
+
+</div>
+<div class="connector"></div></section>
+
+<section class="stage">
+  <div class="stage-head"><span class="stage-num">04</span><h2>起飛／降落判斷與整個飛行流程</h2></div>
+  <div class="stage-desc">這是這支程式跟 <code>visual_odometry.py</code>／<code>live_vo_gps.py</code> 最不一樣的地方：不是「餵幾張現成的照片」，也不是「開機就持續即時定位」，而是自己判斷「什麼時候該開始拍」「什麼時候該停」，並且把每一張照片存成一個帶有真實 GPS／VO 比對欄位的檔名。</div>
+
+
+<div class="fn-card" id="wait_for_takeoff">
+  <div class="fn-head">
+    <div class="fn-name">wait_for_takeoff<span class="paren">(conn, takeoff_altitude_m, poll_s=0.5)</span></div>
+    <div class="fn-tag">流程控制</div>
+  </div>
+  <pre class="code"><code>def wait_for_takeoff(conn, takeoff_altitude_m, poll_s=0.5):
+    print(f&quot;Waiting for relative altitude &gt; {takeoff_altitude_m:.1f}m ...&quot;)
+    last_print = 0.0
+    while True:
+        pos = read_global_position(conn, timeout=2.0)
+        if pos is not None:
+            alt_agl = pos[3]
+            now = time.time()
+            if now - last_print &gt; 5.0:
+                print(f&quot;  current relative altitude: {alt_agl:.1f}m&quot;)
+                last_print = now
+            if alt_agl &gt; takeoff_altitude_m:
+                print(f&quot;Takeoff altitude reached ({alt_agl:.1f}m). Starting capture.\n&quot;)
+                return
+        time.sleep(poll_s)</code></pre>
+  <div class="explain"><p>在正式開始拍照之前，先卡在這個迴圈裡，每 <code>poll_s</code>（預設 0.5 秒）讀一次 <code>GLOBAL_POSITION_INT</code> 的<strong>相對高度（AGL，離地高度）</strong>，每 5 秒印一次目前高度讓操作者知道還在等。一旦 AGL 超過 <code>--takeoff-altitude-m</code>（預設 40m），就直接 <code>return</code>，回到 <code>main()</code> 繼續往下走。</p></div>
+  <div class="concept"><div class="concept-label">為什麼用 AGL 不是 MSL？</div><p>「飛高於 40 公尺」指的是離地高度，跟起飛地點的海拔無關，所以這裡用 <code>pos[3]</code>（<code>relative_alt</code>，AGL）而不是 <code>pos[2]</code>（<code>alt</code>，MSL）。<code>--land-altitude-m</code> 的降落判斷（見第 10 段）用的是同一個 AGL 欄位，邏輯一致。</p></div>
+</div>
+
+<div class="fn-card" id="main_setup">
+  <div class="fn-head">
+    <div class="fn-name">main()<span class="paren"> — 初始化與一次性錨點</span></div>
+    <div class="fn-tag">入口</div>
+  </div>
+  <pre class="code"><code>    out_dir = args.out_dir or os.path.join(os.path.dirname(os.path.abspath(__file__)), &#x27;photo_obtained&#x27;)
+    os.makedirs(out_dir, exist_ok=True)
+
+    conn = connect_pixhawk(args.port, args.baud)
+
+    # Anchor: read real GPS + true heading from Pixhawk exactly once, here,
+    # and never again -- see the module docstring&#x27;s CAVEAT about the
+    # untracked climb from here to the takeoff altitude.
+    pos = read_global_position(conn, timeout=10)
+    if pos is None:
+        raise SystemExit(&quot;Could not read GLOBAL_POSITION_INT from Pixhawk for the anchor fix.&quot;)
+    heading = read_heading(conn, timeout=10)
+    if heading is None:
+        raise SystemExit(&quot;Could not read VFR_HUD heading from Pixhawk for the anchor fix.&quot;)
+    anchor_lat, anchor_lon, anchor_alt_msl, anchor_alt_agl = pos
+    tracker = PositionTracker(lat=anchor_lat, lon=anchor_lon, alt_m=anchor_alt_msl, heading_deg=heading)
+    print(f&quot;Anchor (read once at startup): {anchor_lat:.7f}, {anchor_lon:.7f}  &quot;
+          f&quot;alt_msl={anchor_alt_msl:.1f}m  agl={anchor_alt_agl:.1f}m  heading={heading:.0f}deg\n&quot;)
+
+    wait_for_takeoff(conn, args.takeoff_altitude_m)
+
+    cap = open_camera(args.sensor_id)</code></pre>
+  <div class="explain"><p>參數解析（<code>--interval</code>／<code>--takeoff-altitude-m</code>／<code>--land-altitude-m</code>／<code>--port</code>／<code>--baud</code>／<code>--sensor-id</code>／<code>--out-dir</code>，程式最前面的 <code>argparse</code> 區塊）沒有特別的地方，跳過不列，直接看真正的初始化邏輯：</p>
+    <ul>
+      <li>建好輸出資料夾（預設是這支程式旁邊的 <code>photo_obtained/</code>，跟現有測試照片同一個資料夾）</li>
+      <li>連上 Pixhawk（沿用第 5 段的 <code>connect_pixhawk()</code>）</li>
+      <li><strong>只在這裡讀一次</strong> <code>read_global_position()</code> 跟 <code>read_heading()</code>，讀不到就直接 <code>SystemExit</code> —— 沒有像 <code>live_vo_gps.py</code> 那樣提供手動 <code>--anchor-lat</code> 之類的備援參數，因為需求就是「一定要來自 Pixhawk 當下讀到的真實值」</li>
+      <li>用讀到的這組錨點建立 <code>PositionTracker</code>，之後整支程式<strong>不會再呼叫 <code>reset_anchor()</code></strong></li>
+      <li>呼叫 <code>wait_for_takeoff()</code> 卡住，直到超過起飛高度</li>
+      <li>過了起飛高度才 <code>open_camera()</code> 開相機</li>
+    </ul></div>
+  <div class="concept warn"><div class="concept-label">錨點讀取時間點 vs. 第一張照片時間點，中間有一段沒被追蹤到</div><p>錨點是「程式一啟動」就讀的（通常在地面），但要等到 AGL 超過 40m 才開始拍第一張照片。這中間的爬升過程完全沒有任何 VO 影像被拿來計算位移，<code>tracker</code> 的位置在第一張照片拍下之前都還停在錨點原地。第 9、10 段會看到：這會讓第一張照片的 <code>real_vo_diff_m</code> 欄位是一個真實存在、而不是 0 的數字 —— 這是設計上的取捨，不是 bug。</p></div>
+</div>
+
+<div class="fn-card" id="main_loop">
+  <div class="fn-head">
+    <div class="fn-name">main()<span class="paren"> — 主迴圈：每張照片的 VO</span></div>
+    <div class="fn-tag">入口</div>
+  </div>
+  <pre class="code"><code>            frame, gray = capture_gray(cap)
+            now = time.time()
+            if frame is None:
+                print(&quot;WARNING: frame grab failed, skipping&quot;)
+                time.sleep(args.interval)
+                continue
+            n_frame += 1
+
+            real_pos = read_global_position(conn, timeout=0.5)
+            if real_pos is not None:
+                real_lat, real_lon, real_alt_msl, cur_alt_agl = real_pos
+            else:
+                real_lat, real_lon, real_alt_msl = anchor_lat, anchor_lon, anchor_alt_msl
+                cur_alt_agl = prev_alt_agl if prev_alt_agl is not None else FALLBACK_ALTITUDE_M
+
+            if prev_gray is None:
+                # First captured frame: no prior frame to match against, so
+                # the VO estimate is still exactly the anchor. See the
+                # &quot;Filename format&quot; note in the module docstring.
+                r = {&#x27;n_matches&#x27;: 0, &#x27;n_inliers&#x27;: 0, &#x27;ok&#x27;: False}
+                move_x = move_y = move_z = 0.0
+            else:
+                dt_s = now - prev_time
+                r = process_pair(prev_gray, gray, prev_alt_agl, cur_alt_agl)
+                state = tracker.apply_leg(r, dt_s=dt_s)
+                move_x = state[&#x27;vn&#x27;] * dt_s  # north, meters, this leg
+                move_y = state[&#x27;ve&#x27;] * dt_s  # east, meters, this leg
+                move_z = r.get(&#x27;altitude_change_m&#x27;, 0.0) if r[&#x27;ok&#x27;] else 0.0
+                if r[&#x27;ok&#x27;]:
+                    agg_distance_m += r[&#x27;magnitude_m&#x27;]</code></pre>
+  <div class="explain"><p>每一輪迴圈：先用 <code>capture_gray()</code> 拍一張（彩色存檔用、灰階算圖用），再用 <code>read_global_position(timeout=0.5)</code> 讀「這一瞬間」的真實 GPS —— 這組數字只會寫進檔名做事後比對，<strong>完全不會餵進 VO 計算</strong>，跟 <code>photo_obtained/</code> 舊測試照片檔名裡的 GPS 是同一種「僅供驗證」的角色。如果這次讀取失敗（<code>real_pos is None</code>），就退回用錨點座標／上一張的 AGL 頂著，不讓程式當掉。</p>
+    <p>接著是這支程式的核心分支：</p>
+    <ul>
+      <li><strong>第一張照片</strong>（<code>prev_gray is None</code>）：沒有前一張可以比對，直接給一組「什麼都沒發生」的空結果（<code>matches=inliers=0</code>、位移全部是 0），<code>tracker</code> 這時仍然停在錨點</li>
+      <li><strong>第二張照片開始</strong>：呼叫第 4 段的 <code>process_pair()</code> 算這一段的位移，再丟給 <code>tracker.apply_leg()</code> 往前推進。<code>apply_leg()</code> 回傳的 <code>vn</code>／<code>ve</code>（公尺/秒）乘回 <code>dt_s</code>（這一輪實際經過的秒數），還原成這一段的<strong>北／東位移（公尺）</strong>，當作檔名裡的 <code>move_x</code>／<code>move_y</code>；<code>move_z</code> 直接拿 <code>process_pair()</code> 算出來的高度變化</li>
+      <li>只有 <code>r['ok']</code> 為真（就算是 LOW-CONFIDENCE 也算）的那一段，才會累加進 <code>agg_distance_m</code>（總飛行里程）—— 這跟 <code>dead_reckoning.PositionTracker.apply_leg()</code> 本身「只要 <code>ok</code> 就會移動位置、信心只影響 <code>hacc</code> 成長速度」的邏輯是一致的</li>
+    </ul></div>
+  <div class="concept"><div class="concept-label">vo_move_x／y／z 是「世界座標」不是「影像座標」</div><p>跟 <code>visual_odometry.py</code> 印出來的 <code>dx_m</code>／<code>dy_m</code>（相機自己視角裡的右／下方向）不一樣，這裡的 <code>move_x</code>／<code>move_y</code> 已經被 <code>tracker</code> 內部依照累積航向角旋轉成<strong>北／東</strong>方向，<code>move_z</code> 是高度變化（正值＝爬升）。這樣檔名裡的位移量才能直接跟 <code>real_lat/lon/height</code>、<code>vo_lat/lon/height</code> 用同一個座標系統對照。</p></div>
+</div>
+
+<div class="fn-card" id="main_save">
+  <div class="fn-head">
+    <div class="fn-name">main()<span class="paren"> — 組檔名、存檔、降落判斷</span></div>
+    <div class="fn-tag">入口</div>
+  </div>
+  <pre class="code"><code>            diff_m = vo.haversine_m(real_lat, real_lon, tracker.lat, tracker.lon)
+
+            ts = datetime.now().strftime(&#x27;%Y%m%d%H%M%S&#x27;)
+            fname = (
+                f&quot;VO_{ts}_{real_lat:.7f}_{real_lon:.7f}_{real_alt_msl:.2f}_&quot;
+                f&quot;{tracker.lat:.7f}_{tracker.lon:.7f}_{tracker.alt_m:.2f}_{diff_m:.2f}_&quot;
+                f&quot;{move_x:.2f}_{move_y:.2f}_{move_z:.2f}_&quot;
+                f&quot;{r[&#x27;n_matches&#x27;]}_{r[&#x27;n_inliers&#x27;]}_{agg_distance_m:.2f}.png&quot;
+            )
+            cv2.imwrite(os.path.join(out_dir, fname), frame)
+
+            prev_gray, prev_time, prev_alt_agl = gray, now, cur_alt_agl
+
+            if cur_alt_agl &lt; args.land_altitude_m:
+                print(f&quot;\nRelative altitude {cur_alt_agl:.1f}m &lt; land threshold &quot;
+                      f&quot;{args.land_altitude_m:.1f}m — landed, stopping.&quot;)
+                has_landed = True
+                continue
+
+            elapsed = time.time() - now
+            time.sleep(max(0.0, args.interval - elapsed))</code></pre>
+  <div class="explain"><p>用 <code>vo.haversine_m()</code>（直接沿用 <code>visual_odometry.py</code> 的大圓距離公式）算出「這一瞬間的真實 GPS」跟「<code>tracker</code> 目前估算的位置」之間的<strong>水平距離</strong>，當作 <code>diff_m</code>（檔名裡的 <code>Real_VO_GPS_difference</code>）。</p>
+    <p>接著照著要求的欄位順序組出檔名（時間戳記 <code>yyyymmddhhmmss</code>、真實經緯高、VO 經緯高、差距、北／東／高度位移、matches、inliers、累積飛行距離），用 <code>cv2.imwrite()</code> 把<strong>彩色</strong>影格存進 <code>photo_obtained/</code>。</p>
+    <p>存完檔才把這張的灰階影格／時間／AGL 記成 <code>prev_*</code>，供下一輪當作「前一張」；然後檢查<strong>降落判斷</strong>：只要這一瞬間的 AGL 掉到 <code>--land-altitude-m</code>（預設 2m）以下，就把 <code>has_landed</code> 設成 <code>True</code>，讓 <code>while not has_landed</code> 迴圈在下一輪開頭自然結束。最後用 <code>time.sleep()</code> 補齊到剛好 <code>--interval</code> 秒，扣掉這一輪處理已經花掉的時間，避免每輪之間的間隔越拖越長。</p></div>
+  <div class="concept warn"><div class="concept-label">降落判斷是單純的高度門檻，沒有防抖動</div><p>只要 AGL 曾經一度低於 <code>--land-altitude-m</code> 就會停止，不會判斷「是不是真的已經降落並斷電」，也不像 <code>dead_reckoning.py</code> 那樣有 <code>hacc</code> 之類的信心概念。如果飛行過程中在低空短暫掠過這個高度（例如起飛前的地面效應量測雜訊、或刻意貼地飛行），程式會提早結束。目前門檻預設 2m，可以用 <code>--land-altitude-m</code> 調整。</p></div>
+</div>
+
+<div class="fn-card" id="main_finish">
+  <div class="fn-head">
+    <div class="fn-name">main()<span class="paren"> — 收尾與統計</span></div>
+    <div class="fn-tag">入口</div>
+  </div>
+  <pre class="code"><code>    except KeyboardInterrupt:
+        print(f&quot;\nStopped early by user after {n_frame} frame(s).&quot;)
+    finally:
+        cap.release()
+
+    print(f&quot;Final: {n_frame} frame(s) captured, {tracker.legs_since_anchor} leg(s) applied, &quot;
+          f&quot;aggregated flight distance {agg_distance_m:.1f}m, &quot;
+          f&quot;final VO position {tracker.lat:.7f},{tracker.lon:.7f} hacc={tracker.hacc_m:.2f}m&quot;)</code></pre>
+  <div class="explain"><p>整個拍照迴圈包在 <code>try/except/finally</code> 裡：<code>Ctrl+C</code>（<code>KeyboardInterrupt</code>）可以隨時手動中斷，不會是唯一的停止方式（正常情況下是第 10 段的降落高度判斷讓迴圈自然跳出）；不論怎麼結束，<code>finally</code> 都會呼叫 <code>cap.release()</code> 把相機釋放掉。</p>
+    <p>最後印一行總結：總共拍了幾張、<code>tracker.legs_since_anchor</code>（套用了幾段有效的 VO leg）、累積飛行距離、最終 VO 估算位置，以及最終的 <code>hacc_m</code>（水平精度信心值，越大代表跟真實位置可能差越多）。</p></div>
+
+</div>
+</section>
+
+<footer>
+  對應原始碼：gpsless_VO_image/vo_flight_capture.py（衍生自 visual_odometry.py + live_vo_gps.py）<br/>
+  程式碼區塊是直接從原始檔案抓出來的，跟目前的原始碼保證一致；只讀 Pixhawk 遙測，不會寫回 GPS_INPUT，尚未在真實飛行中驗證過。
+</footer>

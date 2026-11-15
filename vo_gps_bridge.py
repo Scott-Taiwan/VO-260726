@@ -67,8 +67,10 @@ def main():
     send_gps_input = None
     if not args.dry_run:
         from pymavlink import mavutil
-        # gps_sim.py (colocated) provides the MAVLink GPS_INPUT sender.
-        # Imported lazily so --dry-run works even without pymavlink installed.
+        # gps_sim.py lives in the sibling gpsless_mapping project — reuse
+        # its MAVLink GPS_INPUT sender rather than duplicating it. Imported
+        # lazily so --dry-run works even without pymavlink installed.
+        sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'gpsless_mapping'))
         from gps_sim import send_gps_input
 
         print(f"Connecting to {args.port} @ {args.baud} baud ...", end=' ', flush=True)

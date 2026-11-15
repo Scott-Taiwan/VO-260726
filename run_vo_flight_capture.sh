@@ -87,7 +87,7 @@ LOG_FILE="$LOG_DIR/vo_flight_capture_$(date +%Y%m%d_%H%M%S).log"
 # prompt by opening the log file after the fact, too late to react to it.
 # `> >(tee ...)` (not `| tee`) is deliberate: it keeps $! as THIS script's
 # own python3 PID, not tee's, so stop/status still target the right process.
-nohup python3 -u vo_flight_capture.py --port /dev/ttyTHS1 --baud 57600 "$@" \
+nohup python3 -u vo_flight_capture_fix.py --port /dev/ttyTHS1 --baud 57600 "$@" \
     > >(tee -a "$LOG_FILE") 2>&1 < /dev/null &
 PID=$!
 disown

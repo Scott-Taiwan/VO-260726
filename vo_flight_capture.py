@@ -443,6 +443,7 @@ def main():
                 print(f"WARNING: failed to save photo (disk full / write error?) -- "
                       f"{save_path}  [{free_gb:.1f}GB free on that filesystem, "
                       f"{n_save_failures} failure(s) so far this run]")
+            print(f"[frame {n_frame}] photo: {fname}")
 
             prev_gray, prev_time, prev_alt_agl = gray, now, cur_alt_agl
 

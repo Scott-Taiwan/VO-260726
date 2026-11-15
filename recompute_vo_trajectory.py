@@ -76,8 +76,13 @@ def main():
                      help='multiply each leg\'s raw displacement magnitude by this factor')
     ap.add_argument('--yaw-scale', type=float, default=1.0,
                      help='multiply each leg\'s raw yaw_change_deg by this factor')
+    ap.add_argument('--detector', choices=['sift', 'orb'], default=None,
+                     help='override config.DETECTOR for this run only')
     ap.add_argument('--out', required=True)
     args = ap.parse_args()
+
+    if args.detector:
+        config.DETECTOR = args.detector
 
     ref = load_reference(args.reference_csv)
     print(f"{len(ref)} reference rows loaded from {args.reference_csv}", flush=True)
@@ -85,9 +90,9 @@ def main():
     sample = cv2.imread(os.path.join(args.photo_dir, ref[0][0]))
     h0, w0 = sample.shape[:2]
     focal_px = focal_px_from_diagonal_fov(w0, h0, args.fov)
-    print(f"image {w0}x{h0}, FOV={args.fov}deg -> focal={focal_px:.1f}px, altitude={args.altitude}m, "
-          f"heading={ANCHOR_HEADING_DEG}deg, distance_scale={args.distance_scale}, yaw_scale={args.yaw_scale}",
-          flush=True)
+    print(f"detector={config.DETECTOR}, image {w0}x{h0}, FOV={args.fov}deg -> focal={focal_px:.1f}px, "
+          f"altitude={args.altitude}m, heading={ANCHOR_HEADING_DEG}deg, "
+          f"distance_scale={args.distance_scale}, yaw_scale={args.yaw_scale}", flush=True)
 
     anchor_lat, anchor_lon = ref[0][1], ref[0][2]
     x_cum, y_cum, z_cum = 0.0, 0.0, 0.0

@@ -1,0 +1,212 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>VO 程式版本比較</title>
+<style>
+  :root {
+    --bg: #f7f7f5; --surface: #ffffff; --text: #1d1d1b; --muted: #5d5d58;
+    --line: #c9c9c2; --head: #ecebe6; --rowhead: #f3f2ee;
+    --accent: #1f5fae; --ok: #1f7a3d; --no: #b3261e; --hl: #fff6d6;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #161615; --surface: #1f1f1d; --text: #ecebe6; --muted: #a8a8a0;
+      --line: #44443f; --head: #2a2a27; --rowhead: #242422;
+      --accent: #7fb0ec; --ok: #6cc98b; --no: #f08a82; --hl: #3a3420;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #161615; --surface: #1f1f1d; --text: #ecebe6; --muted: #a8a8a0;
+    --line: #44443f; --head: #2a2a27; --rowhead: #242422;
+    --accent: #7fb0ec; --ok: #6cc98b; --no: #f08a82; --hl: #3a3420;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--text);
+    font-family: "Noto Sans TC", "Microsoft JhengHei", "PingFang TC", system-ui, sans-serif;
+    font-size: 15px; line-height: 1.6;
+  }
+  main { max-width: 1200px; margin: 0 auto; padding: 32px 16px 56px; }
+  h1 { font-size: 26px; margin: 0 0 8px; }
+  h2 { font-size: 20px; margin: 40px 0 12px; padding-bottom: 6px; border-bottom: 2px solid var(--line); }
+  p.lead { color: var(--muted); margin: 0 0 8px; }
+  code {
+    font-family: Consolas, "Cascadia Mono", monospace; font-size: 0.9em;
+    background: var(--head); padding: 1px 5px; border-radius: 4px;
+  }
+  .table-wrap { overflow-x: auto; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); }
+  table { border-collapse: collapse; width: 100%; min-width: 760px; }
+  th, td { border: 1px solid var(--line); padding: 9px 12px; vertical-align: top; text-align: left; }
+  thead th { background: var(--head); font-weight: 700; position: sticky; top: 0; }
+  thead th:first-child { width: 15%; }
+  tbody th { background: var(--rowhead); font-weight: 600; white-space: nowrap; }
+  tr > :first-child { border-left: none; }
+  tr > :last-child { border-right: none; }
+  thead tr:first-child > * { border-top: none; }
+  tbody tr:last-child > * { border-bottom: none; }
+  td.rec, th.rec { background: var(--hl); }
+  .ok { color: var(--ok); font-weight: 700; }
+  .no { color: var(--no); font-weight: 700; }
+  .tag {
+    display: inline-block; font-size: 12px; font-weight: 700; padding: 1px 8px; border-radius: 999px;
+    background: var(--accent); color: var(--surface); margin-left: 6px; vertical-align: middle;
+  }
+  ul.use { padding-left: 20px; }
+  ul.use li { margin: 6px 0; }
+  h3 { font-size: 16px; margin: 24px 0 10px; }
+  table.params thead th:first-child { width: 22%; }
+  table.params tbody th { white-space: nowrap; }
+  td.c { text-align: center; width: 60px; }
+  pre.code {
+    font-family: Consolas, "Cascadia Mono", monospace; font-size: 13.5px; line-height: 1.55;
+    background: var(--surface); border: 1px solid var(--line); border-radius: 8px;
+    padding: 14px 16px; overflow-x: auto; margin: 0;
+  }
+  .note {
+    border-left: 4px solid var(--accent); background: var(--surface);
+    padding: 12px 16px; border-radius: 0 8px 8px 0;
+  }
+</style>
+</head>
+<body>
+<main>
+  <h1>vo_flight_capture_fix / fix1 / fix2 比較</h1>
+  <p class="lead">三支程式是逐步演進的關係，每一版都包含前一版的全部內容，舊版保持不動。<strong>下一次飛行建議使用 fix2。</strong></p>
+
+  <h2>功能比較</h2>
+  <div class="table-wrap">
+  <table>
+    <thead>
+      <tr><th>項目</th><th>fix</th><th>fix1</th><th class="rec">fix2 <span class="tag">建議</span></th></tr>
+    </thead>
+    <tbody>
+      <tr><th>定位</th><td>可靠的資料記錄基準版</td><td>修正 VO 數學</td><td class="rec">fix1 + 連拍挑最佳照片</td></tr>
+      <tr><th>相機降噪（TNR）</th><td>Argus 預設（開啟），造成 11/14 的拖影</td><td>預設<strong>關閉</strong>（<code>--tnr-mode 0</code>），另新增 <code>--ee-mode</code></td><td class="rec">同 fix1</td></tr>
+      <tr><th>每次拍幾張</th><td>1 張</td><td>1 張</td><td class="rec"><strong><code>--burst N</code></strong>（預設 3 張），挑最清晰的（<code>--pick sharpness</code>）或轉動最少的（<code>--pick gyro</code>）</td></tr>
+      <tr><th>航向</th><td>起飛時取羅盤一次，之後逐段累加 VO 偏航角；會漂移，失敗的段落也看不到實際轉向（11/14 最後偏了 95°）</td><td><strong>每一張都直接用羅盤（ATTITUDE yaw）</strong>，不再累加</td><td class="rec">同 fix1</td></tr>
+      <tr><th>傾斜（roll/pitch）</th><td>忽略，假設相機正對地面</td><td><strong>補償</strong>：用每張照片自己的 roll、pitch、航向與氣壓高度，把特徵點投影到地面</td><td class="rec">同 fix1，並使用被選中那張照片自己的時間戳</td></tr>
+      <tr><th>位移計算方式</th><td>影像中心的像素位移換算成公尺，再依 VO 航向旋轉</td><td>直接在地面座標（北/東，公尺）上擬合，並檢查比例 ≈ 1、旋轉 ≈ 0</td><td class="rec">同 fix1</td></tr>
+      <tr><th>讀取的遙測</th><td>GLOBAL_POSITION_INT、VFR_HUD</td><td>另加 <strong>ATTITUDE</strong>，20 Hz（<code>--attitude-hz</code>），取樣時間為拍照時間減去 <code>--camera-latency-ms</code></td><td class="rec">另加 ATTITUDE 的<strong>角速度</strong></td></tr>
+      <tr><th>送給 Pixhawk 的指令</th><td>request_data_stream</td><td>另加暫時性的 SET_MESSAGE_INTERVAL 要求 ATTITUDE（Pixhawk 重開機即清除，不寫入參數）</td><td class="rec">同 fix1</td></tr>
+      <tr><th>VO 高度</th><td>由影像比例累加</td><td>氣壓高度：錨點高度 + AGL 變化</td><td class="rec">同 fix1</td></tr>
+      <tr><th>每段狀態判定</th><td>OK / LOW-CONF / FAIL（依 inlier 數量與比例）</td><td>另外：地面比例 ≠ 1 或旋轉 &gt; 8° 時標為 LOW-CONF</td><td class="rec">同 fix1</td></tr>
+      <tr><th>輸出檔案</th><td>照片、<code>vo_log.csv</code>、<code>run_args.txt</code></td><td>另加 <code>attitude_log.csv</code>，以及 <code>vo_log.csv</code> 新欄位（見下列）</td><td class="rec">另加：<code>attitude_log.csv</code> 角速度欄位、連拍相關欄位、可選的 <code>burst/</code> 資料夾（<code>--save-burst</code>）</td></tr>
+      <tr><th>CSV 新增欄位</th><td>—</td><td><code>roll_deg</code>、<code>pitch_deg</code>、<code>att_yaw_deg</code>、<code>ground_scale</code>、<code>ground_rot_deg</code>、舊方法結果（<code>raw_*</code>）</td><td class="rec">另加 <code>burst_n</code>、<code>burst_pick</code>、<code>sharpness</code>、<code>gyro_dps</code>、<code>burst_sharpness</code>、<code>burst_gyro_dps</code></td></tr>
+      <tr><th>每張照片的 log 內容</th><td>結果 + <code>photo:</code> 檔名</td><td>結果 + roll/pitch/航向 + <code>photo:</code> 檔名</td><td class="rec">另加：選了第幾張、清晰度分數、<code>photo:</code> 檔名，以及沒被選用的連拍照片</td></tr>
+      <tr><th>啟動腳本</th><td><code>run_vo_flight_capture.sh</code></td><td>無（直接執行）</td><td class="rec"><code>run_vo_flight_capture_fix2.sh</code>（預設 <code>--interval 1 --burst 3 --save-burst</code>）</td></tr>
+      <tr><th>啟動時必須收到 ATTITUDE</th><td>否</td><td><strong>是</strong>：10 秒內收不到就結束</td><td class="rec">是</td></tr>
+      <tr><th>每張照片的處理時間</th><td>1 張 + SIFT</td><td>同左 + 地面投影（數毫秒）</td><td class="rec">每多拍一張約多 0.07 秒 + 清晰度評分（數毫秒）</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <h2>各版本的測試狀況</h2>
+  <div class="table-wrap">
+  <table>
+    <thead>
+      <tr><th>測試</th><th>fix</th><th>fix1</th><th class="rec">fix2</th></tr>
+    </thead>
+    <tbody>
+      <tr><th>實際飛行</th><td><span class="ok">✔</span> 11/14</td><td><span class="no">✘</span> 尚未</td><td class="rec"><span class="no">✘</span> 尚未</td></tr>
+      <tr><th>合成幾何測試<br>（已知傾斜、航向、位移）</th><td>—</td><td><span class="ok">✔</span> 誤差約 0.01 m；同樣是純下降，舊方法會產生 7.4 m 的假位移</td><td class="rec">程式碼同 fix1</td></tr>
+      <tr><th>用 11/14 照片重播</th><td>實際飛行結果：最終誤差 17.4 m，最大 89.7 m</td><td>由 GPS 估算傾斜：最終 15.9 m，最大 75.8 m</td><td class="rec">—</td></tr>
+      <tr><th>端到端模擬<br>（假相機 + 假遙測）</th><td>—</td><td>—</td><td class="rec"><span class="ok">✔</span> 兩種挑選方式，在 15 組可驗證的連拍中都選中了清晰的那張</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <h2>參數用法</h2>
+  <p class="lead"><span class="ok">✔</span> = 該版本有此參數，— = 沒有。</p>
+
+  <h3>飛行與連線</h3>
+  <div class="table-wrap">
+  <table class="params">
+    <thead><tr><th>參數</th><th>說明</th><th>預設值</th><th>fix</th><th>fix1</th><th class="rec">fix2</th></tr></thead>
+    <tbody>
+      <tr><th><code>--interval 秒</code></th><td>拍照間隔</td><td><code>2.0</code>（fix2 啟動腳本為 <code>1</code>）</td><td class="c ok">✔</td><td class="c ok">✔</td><td class="c ok rec">✔</td></tr>
+      <tr><th><code>--takeoff-altitude-m 公尺</code></th><td>離地高度超過此值才開始拍攝，並在此時重新設定錨點</td><td><code>30</code></td><td class="c ok">✔</td><td class="c ok">✔</td><td class="c ok rec">✔</td></tr>
+      <tr><th><code>--land-altitude-m 公尺</code></th><td>起飛後離地高度連續 3 次低於此值即判定降落、停止程式</td><td><code>2</code></td><td class="c ok">✔</td><td class="c ok">✔</td><td class="c ok rec">✔</td></tr>
+      <tr><th><code>--port</code> / <code>--baud</code></th><td>Pixhawk 序列埠與鮑率</td><td><code>/dev/ttyTHS1</code> / <code>57600</code></td><td class="c ok">✔</td><td class="c ok">✔</td><td class="c ok rec">✔</td></tr>
+      <tr><th><code>--sensor-id</code></th><td>CSI 相機編號</td><td><code>0</code></td><td class="c ok">✔</td><td class="c ok">✔</td><td class="c ok rec">✔</td></tr>
+      <tr><th><code>--out-dir 路徑</code></th><td>存放照片的上層資料夾，每次執行建立時間戳子資料夾</td><td><code>photo_obtained/</code></td><td class="c ok">✔</td><td class="c ok">✔</td><td class="c ok rec">✔</td></tr>
+      <tr><th><code>--wave-seconds 秒</code></th><td>啟動自我檢查時，要晃動相機的秒數</td><td><code>3</code></td><td class="c ok">✔</td><td class="c ok">✔</td><td class="c ok rec">✔</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <h3>相機曝光與 ISP</h3>
+  <div class="table-wrap">
+  <table class="params">
+    <thead><tr><th>參數</th><th>說明</th><th>預設值</th><th>fix</th><th>fix1</th><th class="rec">fix2</th></tr></thead>
+    <tbody>
+      <tr><th><code>--exposure-ms LO HI</code></th><td>快門（曝光時間）範圍，單位 ms；LO = HI 為固定快門。硬體範圍 0.013–683.709</td><td><code>1 5</code></td><td class="c ok">✔</td><td class="c ok">✔</td><td class="c ok rec">✔</td></tr>
+      <tr><th><code>--gain LO HI</code></th><td>感光元件類比增益範圍，1.0–10.625</td><td><code>1 10.625</code></td><td class="c ok">✔</td><td class="c ok">✔</td><td class="c ok rec">✔</td></tr>
+      <tr><th><code>--isp-gain LO HI</code></th><td>ISP 數位增益範圍，1.0–256.0</td><td><code>1 4</code></td><td class="c ok">✔</td><td class="c ok">✔</td><td class="c ok rec">✔</td></tr>
+      <tr><th><code>--ev 值</code></th><td>曝光補償 -2.0 到 +2.0</td><td>不設定</td><td class="c ok">✔</td><td class="c ok">✔</td><td class="c ok rec">✔</td></tr>
+      <tr><th><code>--tnr-mode 0/1/2</code></th><td>TNR 時域降噪：0 = 關閉、1 = 快速、2 = 高品質</td><td><code>0</code>（關閉）</td><td class="c">—</td><td class="c ok">✔</td><td class="c ok rec">✔</td></tr>
+      <tr><th><code>--tnr-strength 值</code></th><td>TNR 強度 -1.0 到 1.0（TNR 開啟時才有作用）</td><td>不設定</td><td class="c">—</td><td class="c ok">✔</td><td class="c ok rec">✔</td></tr>
+      <tr><th><code>--ee-mode 0/1/2</code></th><td>邊緣強化：0 = 關閉、1 = 快速、2 = 高品質</td><td>不設定（Argus 預設）</td><td class="c">—</td><td class="c ok">✔</td><td class="c ok rec">✔</td></tr>
+      <tr><th><code>--ee-strength 值</code></th><td>邊緣強化強度 -1.0 到 1.0</td><td>不設定</td><td class="c">—</td><td class="c ok">✔</td><td class="c ok rec">✔</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <h3>姿態（ATTITUDE）</h3>
+  <div class="table-wrap">
+  <table class="params">
+    <thead><tr><th>參數</th><th>說明</th><th>預設值</th><th>fix</th><th>fix1</th><th class="rec">fix2</th></tr></thead>
+    <tbody>
+      <tr><th><code>--attitude-hz 值</code></th><td>要求 Pixhawk 傳送 ATTITUDE 的頻率</td><td><code>20</code></td><td class="c">—</td><td class="c ok">✔</td><td class="c ok rec">✔</td></tr>
+      <tr><th><code>--camera-latency-ms 值</code></th><td>相機延遲：姿態取樣時間 = 拍照時間減去此值。尚未校正，可之後用 <code>attitude_log.csv</code> 離線調整</td><td><code>0</code></td><td class="c">—</td><td class="c ok">✔</td><td class="c ok rec">✔</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <h3>連拍（只有 fix2）</h3>
+  <div class="table-wrap">
+  <table class="params">
+    <thead><tr><th>參數</th><th>說明</th><th>預設值</th><th>fix</th><th>fix1</th><th class="rec">fix2</th></tr></thead>
+    <tbody>
+      <tr><th><code>--burst N</code></th><td>每次拍幾張，挑一張做 VO；1 = 不連拍（等同 fix1），最多 10</td><td><code>3</code></td><td class="c">—</td><td class="c">—</td><td class="c ok rec">✔</td></tr>
+      <tr><th><code>--pick sharpness/gyro</code></th><td><code>sharpness</code> = 最清晰（Laplacian 變異數）；<code>gyro</code> = 機身轉動最少（ATTITUDE 角速度）</td><td><code>sharpness</code></td><td class="c">—</td><td class="c">—</td><td class="c ok rec">✔</td></tr>
+      <tr><th><code>--save-burst</code></th><td>沒被選用的連拍照片也存到 <code>burst/</code> 子資料夾</td><td>不存（fix2 啟動腳本預設會存）</td><td class="c">—</td><td class="c">—</td><td class="c ok rec">✔</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <h3>啟動腳本 <code>run_vo_flight_capture_fix2.sh</code></h3>
+  <ul class="use">
+    <li>內建預設：<code>--port /dev/ttyTHS1 --baud 57600 --interval 1 --burst 3 --pick sharpness --save-burst</code></li>
+    <li>後面加的參數會覆蓋預設值。</li>
+    <li><code>--no-save-burst</code>：不存連拍中沒被選用的照片（這是啟動腳本自己的選項）。</li>
+    <li><code>status</code> 查看狀態、<code>stop</code> 停止。</li>
+  </ul>
+
+  <h3>使用範例</h3>
+<pre class="code"># fix（用舊的啟動腳本）
+./run_vo_flight_capture.sh --interval 2 --exposure-ms 1 3
+
+# fix1（直接執行）
+python3 vo_flight_capture_fix1.py --port /dev/ttyTHS1 --interval 1 --tnr-mode 0
+python3 vo_flight_capture_fix1.py --camera-latency-ms 60 --attitude-hz 25
+
+# fix2（用新的啟動腳本）
+./run_vo_flight_capture_fix2.sh                          # 建議設定
+./run_vo_flight_capture_fix2.sh --interval 2             # 處理太慢時拉長間隔
+./run_vo_flight_capture_fix2.sh --pick gyro --burst 5
+./run_vo_flight_capture_fix2.sh --exposure-ms 2 2 --no-save-burst</pre>
+
+  <h2>該用哪一個</h2>
+  <ul class="use">
+    <li><strong>fix2</strong>：下一次飛行使用，執行 <code>./run_vo_flight_capture_fix2.sh</code>，包含所有修正。</li>
+    <li><strong>fix1</strong>：想排除連拍挑選的影響，或 <code>--interval 1</code> 時處理時間太長的時候使用。效果等同 fix2 加 <code>--burst 1</code>。</li>
+    <li><strong>fix</strong>：只當作比較基準，或 Pixhawk 無法送出 ATTITUDE 時使用。</li>
+  </ul>
+
+  <h2>共同限制</h2>
+  <p class="note">三支程式都還假設相機未經校正：水平視角 77°、光學中心在影像正中央、沒有做鏡頭畸變修正。如果實際視角不同，所有距離都會差同一個比例。這次飛行之後，下一步提升精度的工作是相機校正（<code>FX_PIXELS</code>）。</p>
+</main>
+</body>
+</html>

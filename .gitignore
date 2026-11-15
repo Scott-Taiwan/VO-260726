@@ -5,3 +5,8 @@ __pycache__/
 *.pid
 *.pid.log
 logs/
+
+# local tooling
+.claude/
+.vscode/
+.~lock.*
