@@ -56,7 +56,7 @@ tail -f logs/photo_capture_*.log  # 即時看拍攝紀錄
 | `--no-mavlink` | 不連接 Pixhawk，只拍照（檔名為 `nogps`） | — |
 | `--min-free-gb 值` | 剩餘磁碟空間低於此值時自動停止 | `2` |
 | `--out-dir 路徑` | 存放照片的上層資料夾 | `photo_obtained/` |
-| `--sensor-id` | CSI 相機編號 | `0` |
+| `--cam 0/1`（或 `--sensor-id`） | CSI 相機：0 = CAM0、1 = CAM1 | `1`（CAM1） |
 
 ## 4. 輸出檔案
 

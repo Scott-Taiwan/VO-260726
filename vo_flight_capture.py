@@ -226,13 +226,43 @@ def process_pair(gray1, gray2, alt1, alt2):
 
 # ── Camera (new camera's own resolution, explicit -- not config.py's) ──────
 
-def open_camera(sensor_id):
+def add_tnr_arguments(ap):
+    """--tnr-mode / --tnr-strength, shared by every program that opens the
+    camera through this module. Default tnr-mode 0 = OFF: the camera driver's
+    own default (1 = ON) blends consecutive frames and smears moving shots."""
+    ap.add_argument('--tnr-mode', type=int, choices=[0, 1, 2], default=0,
+                    help='temporal noise reduction: 0=off, 1=fast, 2=high quality (default 0 = OFF; '
+                         'the camera driver itself would default to 1 = ON, which smears moving shots)')
+    ap.add_argument('--tnr-strength', type=float, default=None,
+                    help='TNR strength -1.0..1.0 (only matters if --tnr-mode > 0; default: not set)')
+
+
+def check_tnr_arguments(ap, args):
+    if args.tnr_strength is not None and not -1.0 <= args.tnr_strength <= 1.0:
+        ap.error(f"--tnr-strength must be between -1.0 and 1.0 (got {args.tnr_strength})")
+
+
+def add_tnr_to_pipeline(pipeline, sensor_id, tnr_mode=0, tnr_strength=None):
+    """Insert tnr-mode (always) and tnr-strength (if set) into nvarguscamerasrc."""
+    print(f"Camera ISP: tnr-mode={tnr_mode} ({'OFF' if tnr_mode == 0 else 'ON'})  "
+          f"tnr-strength={'not set' if tnr_strength is None else tnr_strength}")
+    extra = [f"tnr-mode={tnr_mode}"]
+    if tnr_strength is not None:
+        extra.append(f"tnr-strength={tnr_strength}")
+    src = f"nvarguscamerasrc sensor-id={sensor_id} "
+    if src not in pipeline:
+        raise RuntimeError("could not add tnr-mode to nvarguscamerasrc -- pipeline format changed?")
+    return pipeline.replace(src, src + ' '.join(extra) + ' ', 1)
+
+
+def open_camera(sensor_id, tnr_mode=0, tnr_strength=None):
     exp_lo_ms = config.EXPOSURE_TIME_RANGE_NS[0] / 1e6
     exp_hi_ms = config.EXPOSURE_TIME_RANGE_NS[1] / 1e6
     print(f"Camera shutter/exposure: exposuretimerange={exp_lo_ms:.2f}-{exp_hi_ms:.2f}ms  "
           f"gainrange={config.GAIN_RANGE[0]:.1f}-{config.GAIN_RANGE[1]:.2f}x  "
           f"ispdigitalgainrange={config.ISP_DIGITAL_GAIN_RANGE[0]:.1f}-{config.ISP_DIGITAL_GAIN_RANGE[1]:.1f}x")
     pipeline = gstreamer_pipeline(sensor_id=sensor_id, width=IMAGE_WIDTH, height=IMAGE_HEIGHT)
+    pipeline = add_tnr_to_pipeline(pipeline, sensor_id, tnr_mode, tnr_strength)
     cap = cv2.VideoCapture(pipeline, cv2.CAP_GSTREAMER)
     if not cap.isOpened():
         raise RuntimeError("Could not open CSI camera — check sensor connection / nvargus-daemon.")
@@ -310,13 +340,16 @@ def main():
                      help='relative (AGL) altitude, after takeoff, below which the program stops (default 2)')
     ap.add_argument('--port', default='/dev/ttyTHS1')
     ap.add_argument('--baud', type=int, default=57600)
-    ap.add_argument('--sensor-id', type=int, default=0)
+    ap.add_argument('--sensor-id', '--cam', dest='sensor_id', type=int, choices=[0, 1], default=1,
+                    help='which CSI camera port to use: 0 = CAM0, 1 = CAM1 (default 1)')
     ap.add_argument('--out-dir', default=None,
                      help='base folder for photos (default: photo_obtained/ next to this script) -- '
                           'each run gets its own timestamped subfolder underneath this')
     ap.add_argument('--wave-seconds', type=int, default=3,
                      help='seconds to rotate/move the camera for during the startup self-check (default 3)')
+    add_tnr_arguments(ap)
     args = ap.parse_args()
+    check_tnr_arguments(ap, args)
 
     base_out_dir = args.out_dir or os.path.join(os.path.dirname(os.path.abspath(__file__)), 'photo_obtained')
     run_id = datetime.now().strftime('%Y%m%d_%H%M%S')
@@ -356,9 +389,9 @@ def main():
     # and never closed/reopened. See self_check_camera()'s docstring for why
     # that matters (a separate preflight check, its own session, does not
     # reliably predict whether THIS session will be healthy).
-    print(f"Opening camera ({IMAGE_WIDTH}x{IMAGE_HEIGHT}, {CAMERA_HFOV_DEG:.0f}deg HFOV, "
+    print(f"Opening camera CAM{args.sensor_id} ({IMAGE_WIDTH}x{IMAGE_HEIGHT}, {CAMERA_HFOV_DEG:.0f}deg HFOV, "
           f"FX_PIXELS=FY_PIXELS={FX_PIXELS:.1f})...")
-    cap = open_camera(args.sensor_id)
+    cap = open_camera(args.sensor_id, args.tnr_mode, args.tnr_strength)
     print("Camera open.\n")
 
     # EVERYTHING from here on is inside one try/finally so cap.release() is

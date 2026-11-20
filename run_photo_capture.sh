@@ -9,6 +9,7 @@
 #   ./run_photo_capture.sh --exposure-ms 1 3                # shutter range 1-3 ms
 #   ./run_photo_capture.sh --exposure-ms 2 2 --tnr-mode 1   # fixed 2 ms shutter, TNR on
 #   ./run_photo_capture.sh --interval 1 --format jpg        # any extra arg overrides its default
+#   ./run_photo_capture.sh --cam 0                          # use CAM0 (default CAM1)
 #   ./run_photo_capture.sh help                             # list every parameter
 #
 #   ./run_photo_capture.sh status                           # running? PID + log path
@@ -24,7 +25,8 @@ LOG_DIR="$SCRIPT_DIR/logs"
 DEFAULT_ARGS=(--port /dev/ttyTHS1 --baud 57600 --interval 0.5 --tnr-mode 0)
 # Other launchers' PID files -- only one program can own the camera / serial port.
 OTHER_PID_FILES=(vo_flight_capture.pid vo_flight_capture_1s.pid vo_flight_capture_always.pid
-                 vo_flight_capture_fix2.pid)
+                 vo_flight_capture_fix2.pid vo_capture_nopx.pid photo_capture_nopx.pid
+                 photo_capture_dualcam.pid)
 
 is_running() {  # $1 = pid file
     [ -f "$1" ] && kill -0 "$(cat "$1")" 2>/dev/null
@@ -93,6 +95,11 @@ echo "command: python3 -u $PROGRAM ${ARGS[*]}" > "$LOG_FILE"
 
 # Output goes to BOTH the log file and this terminal. `> >(tee ...)` keeps $!
 # as python3's PID so stop/status target the right process.
+# set -m (job control): without it, bash starts `&` jobs in a script with
+# SIGINT *ignored*, and Python inherits that -- so `stop`'s kill -INT would
+# be silently dropped and never reach the KeyboardInterrupt/cap.release()
+# cleanup (stop would then always fall through to kill -9).
+set -m
 nohup python3 -u "$PROGRAM" "${ARGS[@]}" \
     > >(tee -a "$LOG_FILE") 2>&1 < /dev/null &
 PID=$!

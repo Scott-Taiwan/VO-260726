@@ -258,7 +258,7 @@ def process_pair(gray1, gray2, alt1, alt2, fallback_altitude_m):
 
 # ── Camera ─────────────────────────────────────────────────────────────────
 
-def build_pipeline(sensor_id, exposure_ns, gain, isp_gain, ev=None):
+def build_pipeline(sensor_id, exposure_ns, gain, isp_gain, ev=None, tnr_mode=0, tnr_strength=None):
     pipeline = gstreamer_pipeline(
         sensor_id=sensor_id, width=IMAGE_WIDTH, height=IMAGE_HEIGHT,
         exposure_time_range_ns=exposure_ns, gain_range=gain, isp_digital_gain_range=isp_gain,
@@ -268,6 +268,13 @@ def build_pipeline(sensor_id, exposure_ns, gain, isp_gain, ev=None):
         if src not in pipeline:
             raise RuntimeError("could not add exposurecompensation -- pipeline format changed?")
         pipeline = pipeline.replace(src, f"{src}exposurecompensation={ev} ", 1)
+    # TNR: tnr-mode is ALWAYS written (default 0 = OFF), so the driver's own
+    # default (1 = ON, blends frames -> smear while moving) never applies.
+    tnr = [f"tnr-mode={tnr_mode}"] + ([f"tnr-strength={tnr_strength}"] if tnr_strength is not None else [])
+    src = f"nvarguscamerasrc sensor-id={sensor_id} "
+    if src not in pipeline:
+        raise RuntimeError("could not add tnr-mode -- pipeline format changed?")
+    pipeline = pipeline.replace(src, src + ' '.join(tnr) + ' ', 1)
     if 'max-buffers' not in pipeline:
         fixed = pipeline.replace('appsink drop=True', 'appsink drop=True max-buffers=1')
         if fixed == pipeline:
@@ -344,7 +351,8 @@ def main():
                     help='relative (AGL) altitude, after takeoff, below which the program stops (default 2)')
     ap.add_argument('--port', default='/dev/ttyTHS1')
     ap.add_argument('--baud', type=int, default=57600)
-    ap.add_argument('--sensor-id', type=int, default=0)
+    ap.add_argument('--sensor-id', '--cam', dest='sensor_id', type=int, choices=[0, 1], default=1,
+                    help='which CSI camera port to use: 0 = CAM0, 1 = CAM1 (default 1)')
     ap.add_argument('--out-dir', default=None,
                     help='base folder for photos (default: photo_obtained/ next to this script) -- '
                          'each run gets its own timestamped subfolder underneath this')
@@ -365,6 +373,11 @@ def main():
                      help='ISP digital gain range (1.0-256.0). Default: %(default)s')
     cam.add_argument('--ev', type=float, default=None,
                      help='exposure compensation in EV, -2.0 to +2.0 (default: not set = 0)')
+    cam.add_argument('--tnr-mode', type=int, choices=[0, 1, 2], default=0,
+                     help='temporal noise reduction: 0=off, 1=fast, 2=high quality (default 0 = OFF; '
+                          'the camera driver itself would default to 1 = ON, which smears moving shots)')
+    cam.add_argument('--tnr-strength', type=float, default=None,
+                     help='TNR strength -1.0..1.0 (only matters if --tnr-mode > 0; default: not set)')
     args = ap.parse_args()
 
     def _check_range(name, rng, lo_lim, hi_lim):
@@ -374,6 +387,8 @@ def main():
     _check_range('--exposure-ms', args.exposure_ms, 0.013, 683.709)
     _check_range('--gain', args.gain, 1.0, 10.625)
     _check_range('--isp-gain', args.isp_gain, 1.0, 256.0)
+    if args.tnr_strength is not None and not -1.0 <= args.tnr_strength <= 1.0:
+        ap.error(f"--tnr-strength must be between -1.0 and 1.0 (got {args.tnr_strength})")
     if args.ev is not None and not -2.0 <= args.ev <= 2.0:
         ap.error(f"--ev must be between -2.0 and 2.0 (got {args.ev})")
     if args.interval <= 0:
@@ -426,15 +441,17 @@ def main():
     csv_file = None
 
     try:
-        print(f"Opening camera ({IMAGE_WIDTH}x{IMAGE_HEIGHT}, {CAMERA_HFOV_DEG:.0f}deg HFOV, "
+        print(f"Opening camera CAM{args.sensor_id} ({IMAGE_WIDTH}x{IMAGE_HEIGHT}, {CAMERA_HFOV_DEG:.0f}deg HFOV, "
               f"FX_PIXELS=FY_PIXELS={FX_PIXELS:.1f})...")
         print(f"Camera shutter/exposure: exposuretimerange={args.exposure_ms[0]:.3f}-"
               f"{args.exposure_ms[1]:.3f}ms  "
               f"gainrange={args.gain[0]:.2f}-{args.gain[1]:.3f}x  "
               f"ispdigitalgainrange={args.isp_gain[0]:.2f}-{args.isp_gain[1]:.2f}x  "
               f"ev={'not set' if args.ev is None else f'{args.ev:+.2f}'}")
+        print(f"Camera ISP: tnr-mode={args.tnr_mode} ({'OFF' if args.tnr_mode == 0 else 'ON'})  "
+              f"tnr-strength={'not set' if args.tnr_strength is None else args.tnr_strength}")
         pipeline = build_pipeline(args.sensor_id, exposure_ns, tuple(args.gain),
-                                  tuple(args.isp_gain), args.ev)
+                                  tuple(args.isp_gain), args.ev, args.tnr_mode, args.tnr_strength)
         print(f"GStreamer pipeline: {pipeline}")
         cap = cv2.VideoCapture(pipeline, cv2.CAP_GSTREAMER)
         if not cap.isOpened():

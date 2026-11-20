@@ -176,7 +176,8 @@ def main():
     ap.add_argument('--min-free-gb', type=float, default=2.0,
                     help='stop cleanly when free disk space drops below this (default 2)')
     cam = ap.add_argument_group('camera')
-    cam.add_argument('--sensor-id', type=int, default=0)
+    cam.add_argument('--sensor-id', '--cam', dest='sensor_id', type=int, choices=[0, 1], default=1,
+                     help='which CSI camera port to use: 0 = CAM0, 1 = CAM1 (default 1)')
     cam.add_argument('--width', type=int, default=1280)
     cam.add_argument('--height', type=int, default=720)
     cam.add_argument('--exposure-ms', type=float, nargs=2, metavar=('LO', 'HI'),
@@ -237,7 +238,7 @@ def main():
         if conn is not None:
             telem = Telemetry(conn)
 
-    print(f"Camera: {a.width}x{a.height}  shutter {a.exposure_ms[0]:.3f}-{a.exposure_ms[1]:.3f} ms  "
+    print(f"Camera CAM{a.sensor_id}: {a.width}x{a.height}  shutter {a.exposure_ms[0]:.3f}-{a.exposure_ms[1]:.3f} ms  "
           f"gain {a.gain[0]}-{a.gain[1]}x  isp-gain {a.isp_gain[0]}-{a.isp_gain[1]}x  "
           f"ev={'not set' if a.ev is None else a.ev}")
     print(f"Camera ISP: tnr-mode={a.tnr_mode} ({'OFF' if a.tnr_mode == 0 else 'ON'})  "

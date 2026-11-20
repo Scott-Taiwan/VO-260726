@@ -557,7 +557,8 @@ def main():
                     help='relative (AGL) altitude, after takeoff, below which the program stops (default 2)')
     ap.add_argument('--port', default='/dev/ttyTHS1')
     ap.add_argument('--baud', type=int, default=57600)
-    ap.add_argument('--sensor-id', type=int, default=0)
+    ap.add_argument('--sensor-id', '--cam', dest='sensor_id', type=int, choices=[0, 1], default=1,
+                    help='which CSI camera port to use: 0 = CAM0, 1 = CAM1 (default 1)')
     ap.add_argument('--out-dir', default=None,
                     help='base folder for photos (default: photo_obtained/ next to this script) -- '
                          'each run gets its own timestamped subfolder underneath this')
@@ -668,7 +669,7 @@ def main():
     csv_file = None
 
     try:
-        print(f"Opening camera ({IMAGE_WIDTH}x{IMAGE_HEIGHT}, {CAMERA_HFOV_DEG:.0f}deg HFOV, "
+        print(f"Opening camera CAM{args.sensor_id} ({IMAGE_WIDTH}x{IMAGE_HEIGHT}, {CAMERA_HFOV_DEG:.0f}deg HFOV, "
               f"FX_PIXELS=FY_PIXELS={FX_PIXELS:.1f})...")
         print(f"Camera shutter/exposure: exposuretimerange={args.exposure_ms[0]:.3f}-"
               f"{args.exposure_ms[1]:.3f}ms  "

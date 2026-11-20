@@ -58,7 +58,8 @@ def main():
     ap.add_argument('--interval', type=float, default=2.0, help='seconds between captures (default 2)')
     ap.add_argument('--port', default='/dev/ttyTHS1')
     ap.add_argument('--baud', type=int, default=57600)
-    ap.add_argument('--sensor-id', type=int, default=0)
+    ap.add_argument('--sensor-id', '--cam', dest='sensor_id', type=int, choices=[0, 1], default=1,
+                    help='which CSI camera port to use: 0 = CAM0, 1 = CAM1 (default 1)')
     ap.add_argument('--out-dir', default=None,
                      help='base folder for photos (default: photo_obtained/ next to this script) -- '
                           'each run gets its own timestamped subfolder underneath this')
@@ -66,7 +67,9 @@ def main():
                      help='seconds to rotate/move the camera for during the startup self-check (default 3)')
     ap.add_argument('--land-altitude-m', type=float, default=2.0,
                      help='AGL (m) below which, once airborne, the run auto-stops as "landed" (default 2)')
+    vfc.add_tnr_arguments(ap)
     args = ap.parse_args()
+    vfc.check_tnr_arguments(ap, args)
 
     base_out_dir = args.out_dir or os.path.join(os.path.dirname(os.path.abspath(__file__)), 'photo_obtained')
     run_id = datetime.now().strftime('%Y%m%d_%H%M%S')
@@ -99,9 +102,9 @@ def main():
           f"alt_msl={anchor_alt_msl:.1f}m  agl={anchor_alt_agl:.1f}m  heading={heading:.0f}deg\n")
     tracker = vfc.PositionTracker(lat=anchor_lat, lon=anchor_lon, alt_m=anchor_alt_msl, heading_deg=heading)
 
-    print(f"Opening camera ({vfc.IMAGE_WIDTH}x{vfc.IMAGE_HEIGHT}, {vfc.CAMERA_HFOV_DEG:.0f}deg HFOV, "
+    print(f"Opening camera CAM{args.sensor_id} ({vfc.IMAGE_WIDTH}x{vfc.IMAGE_HEIGHT}, {vfc.CAMERA_HFOV_DEG:.0f}deg HFOV, "
           f"FX_PIXELS=FY_PIXELS={vfc.FX_PIXELS:.1f})...")
-    cap = vfc.open_camera(args.sensor_id)
+    cap = vfc.open_camera(args.sensor_id, args.tnr_mode, args.tnr_strength)
     print("Camera open.\n")
 
     # EVERYTHING from here on is inside one try/finally so cap.release() is

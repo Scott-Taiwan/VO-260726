@@ -11,6 +11,7 @@
 #   ./run_vo_flight_capture_fix2.sh                       # just the defaults above
 #   ./run_vo_flight_capture_fix2.sh --interval 2          # any extra arg overrides its default
 #   ./run_vo_flight_capture_fix2.sh --pick gyro --burst 5
+#   ./run_vo_flight_capture_fix2.sh --cam 0               # use CAM0 (default is CAM1)
 #   ./run_vo_flight_capture_fix2.sh --no-save-burst       # don't keep the non-chosen burst frames
 #
 #   ./run_vo_flight_capture_fix2.sh status                # is it running? PID + log path
@@ -114,6 +115,11 @@ echo "command: python3 -u $PROGRAM ${ARGS[*]}" > "$LOG_FILE"
 # Output goes through `tee` to BOTH the log file and this terminal (the camera
 # self-check at startup asks you to move the camera). `> >(tee ...)` keeps $!
 # as python3's PID, so stop/status target the right process.
+# set -m (job control): without it, bash starts `&` jobs in a script with
+# SIGINT *ignored*, and Python inherits that -- so `stop`'s kill -INT would
+# be silently dropped and never reach the KeyboardInterrupt/cap.release()
+# cleanup (stop would then always fall through to kill -9).
+set -m
 nohup python3 -u "$PROGRAM" "${ARGS[@]}" \
     > >(tee -a "$LOG_FILE") 2>&1 < /dev/null &
 PID=$!

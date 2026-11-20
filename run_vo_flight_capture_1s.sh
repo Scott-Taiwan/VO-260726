@@ -88,6 +88,11 @@ LOG_FILE="$LOG_DIR/vo_flight_capture_1s_$(date +%Y%m%d_%H%M%S).log"
 # log file afterward.
 # `> >(tee ...)` (not `| tee`) is deliberate: it keeps $! as THIS script's
 # own python3 PID, not tee's, so stop/status still target the right process.
+# set -m (job control): without it, bash starts `&` jobs in a script with
+# SIGINT *ignored*, and Python inherits that -- so `stop`'s kill -INT would
+# be silently dropped and never reach the KeyboardInterrupt/cap.release()
+# cleanup (stop would then always fall through to kill -9).
+set -m
 nohup python3 -u vo_flight_capture_1s.py --port /dev/ttyTHS1 --baud 57600 "$@" \
     > >(tee -a "$LOG_FILE") 2>&1 < /dev/null &
 PID=$!
